@@ -1,0 +1,131 @@
+/* ── 장비 관리 페이지 ── */
+.device-mgmt {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.device-mgmt-header {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+
+.device-mgmt-body {
+  padding-top: 28px;
+  padding-bottom: 40px;
+  flex: 1;
+}
+
+/* 액션 바 */
+.device-mgmt-body .action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.add-device-btn {
+  background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+
+.add-device-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* 장비 테이블 */
+.device-table-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.device-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.device-table th {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 14px 18px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.device-table td {
+  padding: 14px 18px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.device-table tbody tr {
+  transition: background 0.15s;
+}
+
+.device-table tbody tr:hover {
+  background: var(--bg-card-hover);
+}
+
+.device-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.td-id {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  width: 50px;
+}
+
+.td-deviceid {
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.td-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.td-model {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.td-date {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-family: var(--font-mono);
+}
+
+.empty-row {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 30px !important;
+}

@@ -69,9 +69,9 @@ export default function DeviceCard({ device, state, onStart, delay }) {
       <button
         className={`inspect-btn ${isLocked ? 'locked' : ''}`}
         onClick={onStart}
-        disabled={isRunning || isStopped || isLocked}
+        disabled={isRunning || isError || isStopped || isLocked}
       >
-        {isLocked ? '🔒 장비 잠금' : isRunning ? '검사 중...' : isStopped ? '검사 완료' : '검사 시작'}
+        {isLocked ? '🔒 장비 잠금' : (isRunning || isError) ? '검사 중...' : isStopped ? '검사 완료' : '검사 시작'}
       </button>
     </div>
   );

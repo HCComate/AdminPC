@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import UserManagement from './components/UserManagement';
 import ScheduleManagement from './components/ScheduleManagement';
 import NoticeManagement from './components/NoticeManagement';
+import DeviceManagement from './components/DeviceManagement';
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -57,6 +58,16 @@ export default function App() {
   if (page === 'notices' && (user.role === 'Master' || user.role === 'Technician')) {
     return (
       <NoticeManagement
+        user={user}
+        onBack={() => setPage('dashboard')}
+      />
+    );
+  }
+
+  // 장비 관리 페이지 (Master 전용)
+  if (page === 'devices' && user.role === 'Master') {
+    return (
+      <DeviceManagement
         user={user}
         onBack={() => setPage('dashboard')}
       />
