@@ -39,6 +39,10 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
   const sessionOk = useRef(0);
   const sessionNg = useRef(0);
 
+  // 🚀 성능 최적화: 실시간 데이터 버퍼 (즉시 렌더링 대신 300ms 간격으로 일괄 반영)
+  const dataBuffer = useRef([]);         // 소켓 수신 데이터를 임시로 쌓는 버퍼
+  const flushTimerRef = useRef(null);    // flush interval ID
+
   // 페이지 로드 시: API 데이터 로딩과 소켓 연결을 동시에 진행
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -100,55 +104,73 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
     socket.on('connect', () => setConnected(true));
     socket.on('disconnect', () => setConnected(false));
 
-    // 모바일 앱에 포워딩되는 것과 동일한 데이터를 웹 UI에서도 수신
+    // 🚀 성능 최적화: 데이터를 즉시 렌더링하지 않고 버퍼에 쌓기만 함
     socket.on('mobile_data_feed', (data) => {
-      const header = data.header || {};
-      const body = data.body || {};
-      const deviceId = header.device_id;
-      const visionResult = body.vision_result || {};
+      dataBuffer.current.push(data);
+    });
 
-      // 실시간 세션 카운터 업데이트
-      if (visionResult.result === 'OK') sessionOk.current += 1;
-      if (visionResult.result === 'NG') sessionNg.current += 1;
+    // 🚀 성능 최적화: 300ms 간격으로 버퍼에 쌓인 데이터를 한 번에 State에 반영
+    flushTimerRef.current = setInterval(() => {
+      const buffered = dataBuffer.current;
+      if (buffered.length === 0) return;
 
-      // 장비 상태 업데이트 (LOCKED 상태는 보호: 데이터가 와도 LOCKED를 유지)
+      // 버퍼를 즉시 비우고 복사본으로 작업 (다음 데이터가 밀려도 안전)
+      dataBuffer.current = [];
+
+      // 세션 카운터 일괄 업데이트 (ref이므로 렌더링 유발 없음)
+      let okInc = 0;
+      let ngInc = 0;
+      const newLogEntries = [];
+
+      for (const data of buffered) {
+        const header = data.header || {};
+        const body = data.body || {};
+        const visionResult = body.vision_result || {};
+
+        if (visionResult.result === 'OK') okInc += 1;
+        if (visionResult.result === 'NG') ngInc += 1;
+
+        newLogEntries.push({
+          id: `${header.device_id}-${body.sequence}-${Date.now()}-${Math.random()}`,
+          device_id: header.device_id,
+          sequence: body.sequence,
+          result: visionResult.result,
+          defect_type: visionResult.defect_type,
+          status_codes: (body.status_info || []).map(s => s.code).join(', '),
+          timestamp: body.timestamp,
+        });
+      }
+
+      sessionOk.current += okInc;
+      sessionNg.current += ngInc;
+
+      // 장비 상태 일괄 업데이트 (setState 1회만 호출)
       setDeviceStates(prev => {
-        const current = prev[deviceId] || {};
+        const updated = { ...prev };
+        for (const data of buffered) {
+          const deviceId = (data.header || {}).device_id;
+          const body = data.body || {};
+          const visionResult = body.vision_result || {};
+          const current = updated[deviceId] || {};
 
-        // LOCKED 상태인 장비는 status를 덮어쓰지 않음
-        const newStatus = current.status === 'LOCKED'
-          ? 'LOCKED'
-          : (body.machine_status || 'UNKNOWN');
+          const newStatus = current.status === 'LOCKED'
+            ? 'LOCKED'
+            : (body.machine_status || 'UNKNOWN');
 
-        return {
-          ...prev,
-          [deviceId]: {
+          updated[deviceId] = {
             status: newStatus,
             sequence: body.sequence || 0,
             lastResult: visionResult.result || null,
-            okCount: visionResult.result === 'OK'
-              ? (current.okCount || 0) + 1
-              : (current.okCount || 0),
-            ngCount: visionResult.result === 'NG'
-              ? (current.ngCount || 0) + 1
-              : (current.ngCount || 0),
-          }
-        };
+            okCount: (current.okCount || 0) + (visionResult.result === 'OK' ? 1 : 0),
+            ngCount: (current.ngCount || 0) + (visionResult.result === 'NG' ? 1 : 0),
+          };
+        }
+        return updated;
       });
 
-      // 실시간 로그에 추가 (최근 100건 유지)
-      const logEntry = {
-        id: `${deviceId}-${body.sequence}-${Date.now()}`,
-        device_id: deviceId,
-        sequence: body.sequence,
-        result: visionResult.result,
-        defect_type: visionResult.defect_type,
-        status_codes: (body.status_info || []).map(s => s.code).join(', '),
-        timestamp: body.timestamp,
-      };
-
-      setLogs(prev => [logEntry, ...prev].slice(0, 100));
-    });
+      // 로그 일괄 업데이트 (setState 1회만 호출)
+      setLogs(prev => [...newLogEntries.reverse(), ...prev].slice(0, 100));
+    }, 300);
 
     // 배치 완료 이벤트 수신 (장비 상태를 STOP으로 변경 → 3초 후 IDLE로 자동 복귀)
     socket.on('batch_complete_notify', (data) => {
@@ -206,6 +228,9 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
     });
 
     return () => {
+      // 🚀 flush 타이머 정리
+      if (flushTimerRef.current) clearInterval(flushTimerRef.current);
+
       socket.off('connect');
       socket.off('disconnect');
       socket.off('mobile_data_feed');
