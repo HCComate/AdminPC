@@ -1,0 +1,434 @@
+/* ── 사용자 관리 페이지 ── */
+.user-mgmt {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-mgmt-header {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+
+.back-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: var(--accent-blue);
+}
+
+.user-mgmt-body {
+  padding-top: 28px;
+  padding-bottom: 40px;
+  flex: 1;
+}
+
+/* 알림 메시지 */
+.msg-success {
+  background: var(--accent-green-glow);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--accent-green);
+  padding: 12px 18px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.msg-error {
+  background: var(--accent-red-glow);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--accent-red);
+  padding: 12px 18px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* 액션 바 */
+.user-mgmt-body .action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.add-user-btn {
+  background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+
+.add-user-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* 새 사용자 등록 폼 */
+.create-form {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 24px;
+  margin-bottom: 24px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.form-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 160px;
+}
+
+.form-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-field input,
+.form-field select {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+  border-color: var(--accent-blue);
+}
+
+.form-submit-btn {
+  background: var(--accent-green);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+  height: 42px;
+}
+
+.form-submit-btn:hover {
+  background: #059669;
+}
+
+/* 사용자 테이블 */
+.user-table-wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.user-table th {
+  background: var(--bg-secondary);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 14px 18px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.user-table td {
+  padding: 14px 18px;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.user-table tbody tr {
+  transition: background 0.15s;
+}
+
+.user-table tbody tr:hover {
+  background: var(--bg-card-hover);
+}
+
+.user-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.td-id {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  width: 50px;
+}
+
+.td-empid {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.td-username {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.me-badge {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.td-date {
+  color: var(--text-muted);
+  font-size: 13px;
+  font-family: var(--font-mono);
+}
+
+/* 역할 배지 */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.role-operator {
+  background: rgba(107, 114, 128, 0.15);
+  color: var(--accent-gray);
+}
+
+.role-technician {
+  background: var(--accent-yellow-glow);
+  color: var(--accent-yellow);
+}
+
+.role-master {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+}
+
+/* 역할 셀렉트 */
+.role-select {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.role-select:focus {
+  border-color: var(--accent-blue);
+}
+
+/* 삭제 버튼 */
+.delete-btn {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--accent-red);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-btn:hover {
+  background: var(--accent-red-glow);
+  border-color: var(--accent-red);
+}
+
+.loading-text {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 40px;
+  font-size: 14px;
+}
+
+/* 삭제 확인 모달 */
+.delete-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.delete-modal {
+  background: var(--bg-card, #1e293b);
+  border: 1px solid var(--border-color, #334155);
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.delete-modal-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.delete-modal-title {
+  color: var(--text-primary, #f1f5f9);
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+}
+
+.delete-modal-text {
+  color: var(--text-secondary, #94a3b8);
+  font-size: 15px;
+  margin: 0 0 6px 0;
+  line-height: 1.5;
+}
+
+.delete-modal-text strong {
+  color: var(--accent-red, #ef4444);
+}
+
+.delete-modal-sub {
+  color: var(--text-muted, #64748b);
+  font-size: 13px;
+  margin: 0 0 24px 0;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modal-cancel-btn {
+  background: transparent;
+  border: 1px solid var(--border-color, #334155);
+  color: var(--text-secondary, #94a3b8);
+  padding: 10px 28px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--text-secondary, #94a3b8);
+}
+
+.modal-confirm-btn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: none;
+  color: white;
+  padding: 10px 28px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-confirm-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
+}
+
+/* 이름 및 근무 상태 스타일 */
+.td-nickname {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.online {
+  background: var(--accent-green-glow, rgba(16, 185, 129, 0.15));
+  color: var(--accent-green, #10b981);
+}
+
+.status-badge.offline {
+  background: rgba(107, 114, 128, 0.15);
+  color: var(--text-muted, #64748b);
+}

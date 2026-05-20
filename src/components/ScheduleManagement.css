@@ -1,0 +1,291 @@
+/* ── 근무 일정 관리 페이지 ── */
+.schedule-mgmt {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-header {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+
+.schedule-body {
+  padding-top: 28px;
+  padding-bottom: 40px;
+  flex: 1;
+}
+
+/* 컨트롤 카드 (날짜 선택 및 저장) */
+.schedule-control-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 24px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.date-picker-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.date-picker-wrap label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.date-input {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 16px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.2s;
+  min-width: 200px;
+}
+
+.date-input:focus {
+  border-color: var(--accent-blue);
+}
+
+.save-btn {
+  background: linear-gradient(135deg, var(--accent-green), #059669);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 32px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s;
+}
+
+.save-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+}
+
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 사용자 리스트 카드 */
+.users-list-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 24px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.card-title {
+  margin-top: 0;
+  margin-bottom: 24px;
+  color: var(--text-primary);
+  font-size: 18px;
+}
+
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.user-check-card {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.user-check-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent-blue);
+}
+
+.user-check-card.selected {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: var(--accent-blue);
+}
+
+.check-indicator {
+  margin-right: 16px;
+}
+
+.check-indicator input {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--accent-blue);
+}
+
+.user-info-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.user-name-role {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-name-role strong {
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.role-text {
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+}
+
+.user-emp-id {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.no-data {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+}
+
+/* =========================================
+   주요 일정(Event) 섹션 스타일
+   ========================================= */
+.events-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 24px;
+  margin-bottom: 24px;
+  animation: fadeIn 0.35s ease-out;
+}
+
+.event-input-group {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.event-input {
+  flex: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 15px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.event-input:focus {
+  border-color: var(--accent-blue);
+}
+
+.add-event-btn {
+  padding: 0 24px;
+  background-color: var(--accent-blue);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-event-btn:hover {
+  background-color: #2563eb;
+}
+
+.events-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.event-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.event-item:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.event-content {
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.delete-event-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.2s;
+  padding: 4px;
+}
+
+.delete-event-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.no-events {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 20px;
+  font-size: 14px;
+  background-color: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px dashed var(--border-color);
+}
+

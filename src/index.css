@@ -1,0 +1,107 @@
+/* 폰트 로드 */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ── 디자인 토큰 ── */
+:root {
+  /* 색상 팔레트 - 산업용 대시보드 다크 테마 */
+  --bg-primary: #0f1923;
+  --bg-secondary: #1a2332;
+  --bg-card: #1e2d3d;
+  --bg-card-hover: #243547;
+  --bg-input: #162230;
+
+  --text-primary: #e8edf2;
+  --text-secondary: #8899aa;
+  --text-muted: #5a6b7c;
+
+  --accent-blue: #3b82f6;
+  --accent-blue-hover: #2563eb;
+  --accent-green: #10b981;
+  --accent-green-glow: rgba(16, 185, 129, 0.15);
+  --accent-red: #ef4444;
+  --accent-red-glow: rgba(239, 68, 68, 0.15);
+  --accent-yellow: #f59e0b;
+  --accent-yellow-glow: rgba(245, 158, 11, 0.15);
+  --accent-gray: #6b7280;
+
+  --border-color: #2a3a4a;
+  --border-radius: 12px;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.4);
+
+  /* 타이포그래피 */
+  --font-sans: 'Inter', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ── 리셋 & 기본 ── */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── 유틸리티 ── */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  width: 100%;
+}
+
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* 페이드인 애니메이션 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
