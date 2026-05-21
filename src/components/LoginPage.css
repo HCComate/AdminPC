@@ -1,107 +1,109 @@
+/* ── 로그인 컨테이너 ── */
 .login-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0f1923 0%, #1a2332 50%, #162230 100%);
+  background: #fafafa;
   padding: 24px;
 }
 
 .login-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: #ffffff;
+  border: 1px solid #eeeeee;
   border-radius: 16px;
-  padding: 48px 40px;
+  padding: 60px 60px;
   width: 100%;
-  max-width: 420px;
-  box-shadow: var(--shadow-lg);
+  max-width: 520px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   animation: fadeIn 0.5s ease-out;
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 36px;
+  margin-bottom: 40px;
 }
 
 .login-logo {
-  width: 72px;
-  height: 72px;
-  background: linear-gradient(135deg, var(--accent-blue), #6366f1);
+  width: 80px;
+  height: 80px;
+  background: #fafafa;
   border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 16px;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+  margin: 0 auto 20px;
+  border: 1px solid #eeeeee;
 }
 
 .logo-icon {
-  font-size: 36px;
+  font-size: 40px;
 }
 
 .login-title {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 4px;
+  color: #11181c;
+  margin-bottom: 8px;
   letter-spacing: -0.5px;
 }
 
 .login-subtitle {
-  font-size: 14px;
-  color: var(--text-secondary);
+  font-size: 16px;
+  color: #999999;
 }
 
 /* 폼 */
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .input-group label {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: #999999;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .input-group input {
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
+  background: #fafafa;
+  border: 1px solid #eeeeee;
   border-radius: 10px;
-  padding: 14px 16px;
-  font-size: 15px;
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  padding: 16px 20px;
+  font-size: 16px;
+  color: #11181c;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   outline: none;
 }
 
 .input-group input:focus {
-  border-color: var(--accent-blue);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  border-color: #3055c1;
+  box-shadow: 0 0 0 3px rgba(48, 85, 193, 0.1);
 }
 
 .input-group input::placeholder {
-  color: var(--text-muted);
+  color: #999999;
 }
 
 /* 에러 */
 .login-error {
-  background: var(--accent-red-glow);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(165, 115, 115, 0.1);
+  border: 1px solid rgba(165, 115, 115, 0.2);
   border-radius: 10px;
-  padding: 12px 16px;
+  padding: 14px 18px;
   font-size: 14px;
-  color: var(--accent-red);
+  color: #a57373;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -109,22 +111,24 @@
 
 /* 버튼 */
 .login-btn {
-  background: linear-gradient(135deg, var(--accent-blue), #2563eb);
-  color: white;
+  background: #191970;
+  color: #ffffff;
   border: none;
   border-radius: 10px;
-  padding: 14px;
-  font-size: 16px;
+  padding: 18px;
+  font-size: 17px;
   font-weight: 600;
-  font-family: var(--font-sans);
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.2s, opacity 0.2s;
-  margin-top: 4px;
+  transition:
+    transform 0.15s,
+    box-shadow 0.2s;
+  margin-top: 8px;
 }
 
 .login-btn:hover:not(:disabled) {
+  background: #3055c1;
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+  box-shadow: 0 4px 12px rgba(48, 85, 193, 0.2);
 }
 
 .login-btn:active:not(:disabled) {
@@ -139,9 +143,15 @@
 /* 힌트 */
 .login-hint {
   text-align: center;
-  margin-top: 24px;
-  font-size: 12px;
-  color: var(--text-muted);
-  padding-top: 20px;
-  border-top: 1px solid var(--border-color);
+  margin-top: 32px;
+  font-size: 13px;
+  color: #999999;
+  padding-top: 24px;
+  border-top: 1px solid #eeeeee;
+}
+
+.logo-icon {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
 }
