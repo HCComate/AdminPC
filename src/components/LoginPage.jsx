@@ -1,22 +1,23 @@
-import { useState } from 'react';
-import { SERVER_URL } from '../config';
-import './LoginPage.css';
+import { useState } from "react";
+import { SERVER_URL } from "../config";
+import "./LoginPage.css";
+import logoImg from "../assets/logo.png";
 
 export default function LoginPage({ onLoginSuccess }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
       const res = await fetch(`${SERVER_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
 
@@ -25,17 +26,20 @@ export default function LoginPage({ onLoginSuccess }) {
       if (res.ok) {
         // 토큰과 사용자 정보를 localStorage에 저장
         const userInfo = data.user || data;
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify({
-          username: userInfo.username,
-          role: userInfo.role,
-        }));
+        localStorage.setItem("token", data.token);
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            username: userInfo.username,
+            role: userInfo.role,
+          }),
+        );
         onLoginSuccess(userInfo);
       } else {
-        setError(data.error || '로그인에 실패했습니다.');
+        setError(data.error || "로그인에 실패했습니다.");
       }
     } catch (err) {
-      setError('서버에 연결할 수 없습니다. 서버 상태를 확인해주세요.');
+      setError("서버에 연결할 수 없습니다. 서버 상태를 확인해주세요.");
     } finally {
       setLoading(false);
     }
@@ -47,7 +51,7 @@ export default function LoginPage({ onLoginSuccess }) {
         {/* 로고 영역 */}
         <div className="login-header">
           <div className="login-logo">
-            <span className="logo-icon">🔬</span>
+            <img src={logoImg} alt="VisionMate Logo" className="logo-icon" />
           </div>
           <h1 className="login-title">Vision Mate</h1>
           <p className="login-subtitle">관리자 PC 모니터링 시스템</p>
@@ -86,18 +90,12 @@ export default function LoginPage({ onLoginSuccess }) {
             </div>
           )}
 
-          <button
-            type="submit"
-            className="login-btn"
-            disabled={loading}
-          >
-            {loading ? '로그인 중...' : '로그인'}
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? "로그인 중..." : "로그인"}
           </button>
         </form>
 
-        <p className="login-hint">
-          기본 계정: admin / admin1234
-        </p>
+        <p className="login-hint">기본 계정: admin / admin1234</p>
       </div>
     </div>
   );

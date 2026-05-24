@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
-import { SERVER_URL } from '../config';
-import socket from '../socket';
-import DeviceCard from './DeviceCard';
-import './Dashboard.css';
+import { useState, useEffect, useRef } from "react";
+import { SERVER_URL } from "../config";
+import socket from "../socket";
+import DeviceCard from "./DeviceCard";
+import ContinuousDeviceCard, { CONTINUOUS_DEVICES } from "./ContinuousDeviceCard";
+import "./Dashboard.css";
+import logoImg from "../assets/logo.png";
 
 export default function Dashboard({ user, onLogout, onNavigate }) {
   // DB에서 불러온 장비 목록 마스터 데이터
@@ -15,7 +17,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
   const [logs, setLogs] = useState([]);
 
   // 로그 탭 필터 ('ALL' 또는 장비 device_id)
-  const [logTab, setLogTab] = useState('ALL');
+  const [logTab, setLogTab] = useState("ALL");
 
   // 서버 연결 상태
   const [connected, setConnected] = useState(false);
@@ -31,96 +33,111 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
   const sessionNg = useRef(0);
 
   // 🚀 성능 최적화: 실시간 데이터 버퍼 (즉시 렌더링 대신 300ms 간격으로 일괄 반영)
-  const dataBuffer = useRef([]);         // 소켓 수신 데이터를 임시로 쌓는 버퍼
-  const flushTimerRef = useRef(null);    // flush interval ID
+  const dataBuffer = useRef([]); // 소켓 수신 데이터를 임시로 쌓는 버퍼
+  const flushTimerRef = useRef(null); // flush interval ID
 
   // 페이지 로드 시: API 데이터 로딩과 소켓 연결을 동시에 진행
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
 
     // 1) 소켓 연결 즉시 시작 (지연 방지)
     socket.connect();
 
     const fetchSummary = fetch(`${SERVER_URL}/api/dashboard/summary`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    }).then(res => res.ok ? res.json() : null).catch(() => null);
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null);
 
     const fetchDevices = fetch(`${SERVER_URL}/api/devices`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    }).then(res => res.ok ? res.json() : null).catch(() => null);
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null);
 
-    const fetchRegisteredDevices = fetch(`${SERVER_URL}/api/devices/registered`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    }).then(res => res.ok ? res.json() : null).catch(() => null);
+    const fetchRegisteredDevices = fetch(
+      `${SERVER_URL}/api/devices/registered`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    )
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null);
 
-    Promise.all([fetchSummary, fetchDevices, fetchRegisteredDevices]).then(([summaryData, devicesData, registeredData]) => {
-      // 통계 반영
-      if (summaryData) {
-        setDbStats({
-          ok: summaryData.ok_count || 0,
-          ng: summaryData.ng_count || 0,
-          total: summaryData.total_inspections || 0,
-        });
-      }
-
-      // 등록된 장비 목록 반영
-      if (registeredData && Array.isArray(registeredData)) {
-        setDevices(registeredData);
-        // deviceStates 기본 구조 초기화 (새로운 장비 추가 방어)
-        setDeviceStates(prev => {
-          const initial = { ...prev };
-          registeredData.forEach(d => {
-            if (!initial[d.device_id]) {
-              initial[d.device_id] = {
-                status: 'IDLE',
-                sequence: 0,
-                lastResult: null,
-                ngCount: 0,
-                okCount: 0,
-              };
-            }
+    Promise.all([fetchSummary, fetchDevices, fetchRegisteredDevices]).then(
+      ([summaryData, devicesData, registeredData]) => {
+        // 통계 반영
+        if (summaryData) {
+          setDbStats({
+            ok: summaryData.ok_count || 0,
+            ng: summaryData.ng_count || 0,
+            total: summaryData.total_inspections || 0,
           });
-          return initial;
-        });
-      }
+        }
 
-      // 장비 런타임 상태 반영 (RUN, STOP 등)
-      if (devicesData && Array.isArray(devicesData)) {
-        setDeviceStates(prev => {
-          const updated = { ...prev };
-          devicesData.forEach(d => {
-            if (updated[d.device_id]) {
-              const currentStatus = updated[d.device_id].status;
-              // 소켓이 먼저 연결되어 이미 RUN, ERROR, LOCKED 상태를 받았다면 API 과거 데이터로 덮어쓰지 않음
-              if (currentStatus === 'RUN' || currentStatus === 'ERROR' || currentStatus === 'LOCKED') {
-                return;
+        // 등록된 장비 목록 반영
+        if (registeredData && Array.isArray(registeredData)) {
+          setDevices(registeredData);
+          // deviceStates 기본 구조 초기화 (새로운 장비 추가 방어)
+          setDeviceStates((prev) => {
+            const initial = { ...prev };
+            registeredData.forEach((d) => {
+              if (!initial[d.device_id]) {
+                initial[d.device_id] = {
+                  status: "IDLE",
+                  sequence: 0,
+                  lastResult: null,
+                  ngCount: 0,
+                  okCount: 0,
+                };
               }
-
-              let status = d.status;
-              if (status === 'STOP') status = 'IDLE';
-              // 서버에서는 돌고 있더라도 프론트엔드 새로고침 시 초기화 (소켓 데이터가 오면 다시 RUN됨)
-              if (status === 'RUN' || status === 'ERROR') status = 'IDLE';
-
-              updated[d.device_id] = {
-                ...updated[d.device_id],
-                status: status,
-              };
-            }
+            });
+            return initial;
           });
-          return updated;
-        });
-      }
+        }
 
-      // 로딩 화면 종료
-      setLoading(false);
-    });
+        // 장비 런타임 상태 반영 (RUN, STOP 등)
+        if (devicesData && Array.isArray(devicesData)) {
+          setDeviceStates((prev) => {
+            const updated = { ...prev };
+            devicesData.forEach((d) => {
+              if (updated[d.device_id]) {
+                const currentStatus = updated[d.device_id].status;
+                // 소켓이 먼저 연결되어 이미 RUN, ERROR, LOCKED 상태를 받았다면 API 과거 데이터로 덮어쓰지 않음
+                if (
+                  currentStatus === "RUN" ||
+                  currentStatus === "ERROR" ||
+                  currentStatus === "LOCKED"
+                ) {
+                  return;
+                }
+
+                let status = d.status;
+                if (status === "STOP") status = "IDLE";
+                // 서버에서는 돌고 있더라도 프론트엔드 새로고침 시 초기화 (소켓 데이터가 오면 다시 RUN됨)
+                if (status === "RUN" || status === "ERROR") status = "IDLE";
+
+                updated[d.device_id] = {
+                  ...updated[d.device_id],
+                  status: status,
+                };
+              }
+            });
+            return updated;
+          });
+        }
+
+        // 로딩 화면 종료
+        setLoading(false);
+      },
+    );
 
     // 소켓 이벤트 리스너 등록 (connect 이전에 등록해도 문제없음)
-    socket.on('connect', () => setConnected(true));
-    socket.on('disconnect', () => setConnected(false));
+    socket.on("connect", () => setConnected(true));
+    socket.on("disconnect", () => setConnected(false));
 
     // 🚀 성능 최적화: 데이터를 즉시 렌더링하지 않고 버퍼에 쌓기만 함
-    socket.on('mobile_data_feed', (data) => {
+    socket.on("mobile_data_feed", (data) => {
       dataBuffer.current.push(data);
     });
 
@@ -144,8 +161,8 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
         const body = data.body || {};
         const visionResult = body.vision_result || {};
 
-        if (visionResult.result === 'OK') okInc += 1;
-        if (visionResult.result === 'NG') ngInc += 1;
+        if (visionResult.result === "OK") okInc += 1;
+        if (visionResult.result === "NG") ngInc += 1;
 
         newLogEntries.push({
           id: `${header.device_id}-${body.sequence}-${Date.now()}-${Math.random()}`,
@@ -153,7 +170,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
           sequence: body.sequence,
           result: visionResult.result,
           defect_type: visionResult.defect_type,
-          status_codes: (body.status_info || []).map(s => s.code).join(', '),
+          status_codes: (body.status_info || []).map((s) => s.code).join(", "),
           timestamp: body.timestamp,
         });
       }
@@ -162,7 +179,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
       sessionNg.current += ngInc;
 
       // 장비 상태 일괄 업데이트 (setState 1회만 호출)
-      setDeviceStates(prev => {
+      setDeviceStates((prev) => {
         const updated = { ...prev };
         for (const data of buffered) {
           const deviceId = (data.header || {}).device_id;
@@ -170,77 +187,103 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
           const visionResult = body.vision_result || {};
           const current = updated[deviceId] || {};
 
-          const newStatus = current.status === 'LOCKED'
-            ? 'LOCKED'
-            : (body.machine_status || 'UNKNOWN');
+          const newStatus =
+            current.status === "LOCKED"
+              ? "LOCKED"
+              : body.machine_status || "UNKNOWN";
 
           updated[deviceId] = {
             status: newStatus,
             sequence: body.sequence || 0,
             lastResult: visionResult.result || null,
-            okCount: (current.okCount || 0) + (visionResult.result === 'OK' ? 1 : 0),
-            ngCount: (current.ngCount || 0) + (visionResult.result === 'NG' ? 1 : 0),
+            okCount:
+              (current.okCount || 0) + (visionResult.result === "OK" ? 1 : 0),
+            ngCount:
+              (current.ngCount || 0) + (visionResult.result === "NG" ? 1 : 0),
           };
         }
         return updated;
       });
 
       // 로그 일괄 업데이트 (setState 1회만 호출, 이미 최신순으로 정렬됨)
-      setLogs(prev => [...newLogEntries, ...prev].slice(0, 100));
+      setLogs((prev) => [...newLogEntries, ...prev].slice(0, 100));
     }, 150);
 
     // 배치 완료 이벤트 수신 (장비 상태를 STOP으로 변경 → 3초 후 IDLE로 자동 복귀)
-    socket.on('batch_complete_notify', (data) => {
+    socket.on("batch_complete_notify", (data) => {
       const deviceId = data.device_id;
-      setDeviceStates(prev => ({
+      setDeviceStates((prev) => ({
         ...prev,
         [deviceId]: {
           ...prev[deviceId],
-          status: 'STOP',
-        }
+          status: "STOP",
+        },
       }));
 
       // 3초 후 IDLE 상태로 자동 복귀 (검사 버튼 재활성화)
       setTimeout(() => {
-        setDeviceStates(prev => ({
+        setDeviceStates((prev) => ({
           ...prev,
           [deviceId]: {
             ...prev[deviceId],
-            status: 'IDLE',
-          }
+            status: "IDLE",
+          },
+        }));
+      }, 3000);
+    });
+
+    // 🔄 연속 가동 장비 종료 완료 이벤트
+    socket.on("continuous_stopped_notify", (data) => {
+      const deviceId = data.device_id;
+      setDeviceStates((prev) => ({
+        ...prev,
+        [deviceId]: {
+          ...prev[deviceId],
+          status: "STOP",
+        },
+      }));
+
+      // 3초 후 IDLE로 자동 복귀
+      setTimeout(() => {
+        setDeviceStates((prev) => ({
+          ...prev,
+          [deviceId]: {
+            ...prev[deviceId],
+            status: "IDLE",
+          },
         }));
       }, 3000);
     });
 
     // CRITICAL 오류 → 장비 LOCKED 상태로 변경
-    socket.on('critical_alert', (data) => {
+    socket.on("critical_alert", (data) => {
       const deviceId = data.device_id;
-      setDeviceStates(prev => ({
+      setDeviceStates((prev) => ({
         ...prev,
         [deviceId]: {
           ...prev[deviceId],
-          status: 'LOCKED',
-        }
+          status: "LOCKED",
+        },
       }));
-      alert(`🚨 [${deviceId}] 치명적(CRITICAL) 오류 발생!\n에러 코드: ${(data.error_codes || []).join(', ')}\n장비가 잠금되었습니다. 모바일 앱에서 해제해 주세요.`);
+      alert(
+        `🚨 [${deviceId}] 치명적(CRITICAL) 오류 발생!\n에러 코드: ${(data.error_codes || []).join(", ")}\n장비가 잠금되었습니다. 모바일 앱에서 해제해 주세요.`,
+      );
     });
 
-
-
     // 장비 잠금 해제 → IDLE로 복구
-    socket.on('error_resolved', (data) => {
+    socket.on("error_resolved", (data) => {
       const deviceId = data.device_id;
-      setDeviceStates(prev => ({
+      setDeviceStates((prev) => ({
         ...prev,
         [deviceId]: {
           ...prev[deviceId],
-          status: 'IDLE',
-        }
+          status: "IDLE",
+        },
       }));
     });
 
     // 잠긴 장비 시작 시도 차단 알림
-    socket.on('start_blocked', (data) => {
+    socket.on("start_blocked", (data) => {
       alert(`⛔ [${data.device_id}] ${data.reason}`);
     });
 
@@ -248,67 +291,143 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
       // 🚀 flush 타이머 정리
       if (flushTimerRef.current) clearInterval(flushTimerRef.current);
 
-      socket.off('connect');
-      socket.off('disconnect');
-      socket.off('mobile_data_feed');
-      socket.off('batch_complete_notify');
-      socket.off('critical_alert');
+      socket.off("connect");
+      socket.off("disconnect");
+      socket.off("mobile_data_feed");
+      socket.off("batch_complete_notify");
+      socket.off("critical_alert");
 
-      socket.off('error_resolved');
-      socket.off('start_blocked');
+      socket.off("error_resolved");
+      socket.off("start_blocked");
+      socket.off("continuous_stopped_notify");
       socket.disconnect();
     };
   }, []);
 
   // 검사 시작 버튼 핸들러
   const handleStartInspection = (device) => {
-    const batchId = `BATCH_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}_${String(Math.floor(Math.random() * 999)).padStart(3, '0')}`;
+    const batchId = `BATCH_${new Date().toISOString().slice(0, 10).replace(/-/g, "")}_${String(Math.floor(Math.random() * 999)).padStart(3, "0")}`;
 
     // 서버에 검사 시작 이벤트 전송
-    socket.emit('ui_start_btn', {
+    socket.emit("ui_start_btn", {
       device_id: device.device_id,
       batch_id: batchId,
       model_name: device.model_name,
     });
 
     // 즉시 UI 상태를 IDLE로 전환 (서버 응답 대기 중 표시)
-    setDeviceStates(prev => ({
+    setDeviceStates((prev) => ({
       ...prev,
       [device.device_id]: {
         ...prev[device.device_id],
-        status: 'IDLE',
+        status: "IDLE",
         sequence: 0,
         ngCount: 0,
         okCount: 0,
         lastResult: null,
-      }
+      },
     }));
   };
 
   // 전체 장비 동시 시작
   const handleStartAll = () => {
-    devices.forEach(device => {
+    devices.forEach((device) => {
       const state = deviceStates[device.device_id] || {};
-      if (state.status !== 'RUN' && state.status !== 'LOCKED') {
+      if (state.status !== "RUN" && state.status !== "LOCKED") {
         handleStartInspection(device);
       }
     });
   };
 
-  // 🔓 전체 장비 잠금 해제 (테스트용)
-  const handleUnlockAll = () => {
-    socket.emit('unlock_all_devices');
+  // 🔄 연속 가동 장비 시작 핸들러
+  const handleStartContinuous = (device) => {
+    const batchId = `CONT_${new Date().toISOString().slice(0, 10).replace(/-/g, "")}_${String(Math.floor(Math.random() * 999)).padStart(3, "0")}`;
+
+    socket.emit("ui_start_continuous", {
+      device_id: device.device_id,
+      batch_id: batchId,
+      model_name: device.model_name,
+    });
+
+    setDeviceStates((prev) => ({
+      ...prev,
+      [device.device_id]: {
+        ...prev[device.device_id],
+        status: "IDLE",
+        sequence: 0,
+        ngCount: 0,
+        okCount: 0,
+        lastResult: null,
+      },
+    }));
   };
 
-  // 잠긴 장비가 있는지 확인
-  const lockedCount = Object.values(deviceStates).filter(d => d.status === 'LOCKED').length;
+  // 🔄 연속 가동 장비 종료 핸들러
+  const handleStopContinuous = (device) => {
+    socket.emit("ui_stop_continuous", {
+      device_id: device.device_id,
+    });
+
+    setDeviceStates((prev) => ({
+      ...prev,
+      [device.device_id]: {
+        ...prev[device.device_id],
+        status: "STOPPING",
+      },
+    }));
+  };
+
+  // 🔓 전체 장비 잠금 해제 (테스트용)
+  const handleUnlockAll = () => {
+    socket.emit("unlock_all_devices");
+  };
+
+  // 💾 로그 내보내기 + 비우기 핸들러
+  const handleExportAndClear = async () => {
+    if (isAnyRunning) {
+      alert("\u26a0\ufe0f \uc7a5\ube44\uac00 \uac00\ub3d9 \uc911\uc77c \ub54c\ub294 \ub85c\uadf8\ub97c \ub0b4\ubcf4\ub0bc \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.");
+      return;
+    }
+    if (!confirm("\ud604\uc7ac\uae4c\uc9c0\uc758 \ubaa8\ub4e0 \ub370\uc774\ud130 \ub85c\uadf8\ub97c CSV \ud30c\uc77c\ub85c \uc800\uc7a5\ud558\uace0,\nDB\ub97c \ube44\uc6b8\uae4c\uc694?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${SERVER_URL}/api/logs/export-and-clear`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`\u2705 ${data.message}\n\uc800\uc7a5 \ud30c\uc77c: ${data.file}`);
+        // \ud1b5\uacc4 \ucd08\uae30\ud654
+        setDbStats({ ok: 0, ng: 0, total: 0 });
+        sessionOk.current = 0;
+        sessionNg.current = 0;
+        setLogs([]);
+      } else {
+        alert(`\u274c ${data.error}`);
+      }
+    } catch (err) {
+      alert("\u274c \uc11c\ubc84 \uc5f0\uacb0 \uc2e4\ud328");
+    }
+  };
+
+  // \uc7a0\uae34 \uc7a5\ube44\uac00 \uc788\ub294\uc9c0 \ud655\uc778
+  const lockedCount = Object.values(deviceStates).filter(
+    (d) => d.status === "LOCKED",
+  ).length;
 
   // 통계 계산 (DB 누적 + 실시간 세션)
   const totalOk = dbStats.ok + sessionOk.current;
   const totalNg = dbStats.ng + sessionNg.current;
   const totalInspections = totalOk + totalNg;
-  const ngRate = totalInspections > 0 ? ((totalNg / totalInspections) * 100).toFixed(1) : '0.0';
-  const runningCount = Object.values(deviceStates).filter(d => d.status === 'RUN' || d.status === 'ERROR').length;
+  const ngRate =
+    totalInspections > 0
+      ? ((totalNg / totalInspections) * 100).toFixed(1)
+      : "0.0";
+  const runningCount = Object.values(deviceStates).filter(
+    (d) => d.status === "RUN" || d.status === "ERROR",
+  ).length;
   const isAnyRunning = runningCount > 0;
 
   // ── 장비 가동 중 새로고침/창 닫기 방지 ──
@@ -317,8 +436,8 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
     const handleBeforeUnload = (e) => {
       if (isAnyRunning) {
         e.preventDefault();
-        e.returnValue = ''; // 모던 브라우저에서는 빈 문자열로 두어야 기본 경고창이 뜸
-        return '';
+        e.returnValue = ""; // 모던 브라우저에서는 빈 문자열로 두어야 기본 경고창이 뜸
+        return "";
       }
     };
 
@@ -326,67 +445,79 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
     const handleKeyDown = (e) => {
       if (isAnyRunning) {
         // F5 누름 또는 Ctrl+R (Cmd+R) 누름
-        if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R'))) {
+        if (
+          e.key === "F5" ||
+          ((e.ctrlKey || e.metaKey) && (e.key === "r" || e.key === "R"))
+        ) {
           e.preventDefault();
-          alert('⚠️ 현재 장비 검사가 진행 중입니다. 단축키를 통한 새로고침이 차단되었습니다.');
+          alert(
+            "⚠️ 현재 장비 검사가 진행 중입니다. 단축키를 통한 새로고침이 차단되었습니다.",
+          );
         }
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isAnyRunning]);
 
   // 페이지 이동 / 로그아웃 클릭 시 방어 로직
   const handleNavigateUser = () => {
     if (isAnyRunning) {
-      alert('⚠️ 현재 장비 검사가 진행 중입니다.\n데이터 유실을 막기 위해 검사가 모두 완료된 후 이동해주세요.');
+      alert(
+        "⚠️ 현재 장비 검사가 진행 중입니다.\n데이터 유실을 막기 위해 검사가 모두 완료된 후 이동해주세요.",
+      );
       return;
     }
-    onNavigate('users');
+    onNavigate("users");
   };
 
   const handleNavigateDevice = () => {
     if (isAnyRunning) {
-      alert('⚠️ 현재 장비 검사가 진행 중입니다.\n데이터 유실을 막기 위해 검사가 모두 완료된 후 이동해주세요.');
+      alert(
+        "⚠️ 현재 장비 검사가 진행 중입니다.\n데이터 유실을 막기 위해 검사가 모두 완료된 후 이동해주세요.",
+      );
       return;
     }
-    onNavigate('devices');
+    onNavigate("devices");
   };
 
   const handleNavigateSchedule = () => {
     if (isAnyRunning) {
-      alert('⚠️ 장비가 가동 중일 때는 이동할 수 없습니다.');
+      alert("⚠️ 장비가 가동 중일 때는 이동할 수 없습니다.");
       return;
     }
-    onNavigate('schedules');
+    onNavigate("schedules");
   };
 
   const handleNavigateNotice = () => {
     if (isAnyRunning) {
-      alert('⚠️ 장비가 가동 중일 때는 이동할 수 없습니다.');
+      alert("⚠️ 장비가 가동 중일 때는 이동할 수 없습니다.");
       return;
     }
-    onNavigate('notices');
+    onNavigate("notices");
   };
 
   const handleLogout = () => {
     if (isAnyRunning) {
-      alert('⚠️ 현재 장비 검사가 진행 중입니다.\n장비가 모두 정지된 후 로그아웃 해주세요.');
+      alert(
+        "⚠️ 현재 장비 검사가 진행 중입니다.\n장비가 모두 정지된 후 로그아웃 해주세요.",
+      );
       return;
     }
     onLogout();
   };
 
   // 로그 탭 필터링
-  const filteredLogs = logTab === 'ALL'
-    ? logs.slice(0, 30)
-    : logs.filter(log => log.device_id === logTab).slice(0, 20);
+  const filteredLogs =
+    logTab === "ALL"
+      ? logs.slice(0, 30)
+      : logs.filter((log) => log.device_id === logTab).slice(0, 20);
 
   // 로딩 중이면 로딩 화면 표시
   if (loading) {
@@ -405,10 +536,18 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
       {/* 헤더 */}
       <header className="dashboard-header">
         <div className="header-left">
-          <h1 className="header-title">🔬 Vision Mate</h1>
-          <div className={`connection-badge ${connected ? 'connected' : 'disconnected'}`}>
+          <div className="logo-container">
+            <div className="logo-wrapper">
+              <img src={logoImg} alt="VisionMate Logo" className="logo-image" />
+            </div>
+            <h1 className="header-title">Vision Mate</h1>
+          </div>
+
+          <div
+            className={`connection-badge ${connected ? "connected" : "disconnected"}`}
+          >
             <span className="badge-dot"></span>
-            {connected ? '서버 연결됨' : '연결 끊김'}
+            {connected ? "서버 연결됨" : "연결 끊김"}
           </div>
         </div>
         <div className="header-right">
@@ -416,27 +555,44 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             <span className="user-role">{user.role}</span>
             {user.username}
           </span>
-          {(user.role === 'Master' || user.role === 'Technician') && (
-            <button className={`manage-users-btn schedule-btn ${isAnyRunning ? 'disabled' : ''}`} onClick={handleNavigateSchedule}>
+          {(user.role === "MASTER" || user.role === "TECHNICIAN") && (
+            <button
+              className={`manage-users-btn schedule-btn ${isAnyRunning ? "disabled" : ""}`}
+              onClick={handleNavigateSchedule}
+            >
               📅 근무 일정 관리
             </button>
           )}
-          {(user.role === 'Master' || user.role === 'Technician') && (
-            <button className={`manage-users-btn notice-btn ${isAnyRunning ? 'disabled' : ''}`} onClick={handleNavigateNotice}>
+          {(user.role === "MASTER" || user.role === "TECHNICIAN") && (
+            <button
+              className={`manage-users-btn notice-btn ${isAnyRunning ? "disabled" : ""}`}
+              onClick={handleNavigateNotice}
+            >
               📢 공지사항 관리
             </button>
           )}
-          {user.role === 'Master' && (
-            <button className={`manage-users-btn schedule-btn ${isAnyRunning ? 'disabled' : ''}`} onClick={handleNavigateDevice}>
+          {user.role === "MASTER" && (
+            <button
+              className={`manage-users-btn schedule-btn ${isAnyRunning ? "disabled" : ""}`}
+              onClick={handleNavigateDevice}
+            >
               🔧 장비 관리
             </button>
           )}
-          {user.role === 'Master' && (
-            <button className={`manage-users-btn ${isAnyRunning ? 'disabled' : ''}`} onClick={handleNavigateUser}>
+          {user.role === "MASTER" && (
+            <button
+              className={`manage-users-btn ${isAnyRunning ? "disabled" : ""}`}
+              onClick={handleNavigateUser}
+            >
               👥 사용자 관리
             </button>
           )}
-          <button className={`logout-btn ${isAnyRunning ? 'disabled' : ''}`} onClick={handleLogout}>로그아웃</button>
+          <button
+            className={`logout-btn ${isAnyRunning ? "disabled" : ""}`}
+            onClick={handleLogout}
+          >
+            로그아웃
+          </button>
         </div>
       </header>
 
@@ -445,7 +601,9 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
         <section className="summary-row">
           <div className="summary-card">
             <span className="summary-label">가동 장비</span>
-            <span className="summary-value blue">{runningCount} <small>/ {devices.length}</small></span>
+            <span className="summary-value blue">
+              {runningCount} <small>/ {devices.length}</small>
+            </span>
           </div>
           <div className="summary-card">
             <span className="summary-label">총 검사</span>
@@ -471,11 +629,31 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             ▶ 전체 장비 검사 시작
           </button>
           {lockedCount > 0 && (
-            <button className="start-all-btn" onClick={handleUnlockAll} style={{
-              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-              marginLeft: '12px',
-            }}>
+            <button
+              className="start-all-btn"
+              onClick={handleUnlockAll}
+              style={{
+                background: "linear-gradient(135deg, #f59e0b, #d97706)",
+                marginLeft: "12px",
+              }}
+            >
               🔓 전체 잠금 해제 ({lockedCount}대)
+            </button>
+          )}
+          {(user.role === "MASTER" || user.role === "TECHNICIAN") && (
+            <button
+              className="start-all-btn"
+              onClick={handleExportAndClear}
+              disabled={isAnyRunning}
+              style={{
+                background: isAnyRunning
+                  ? "#ccc"
+                  : "linear-gradient(135deg, #6366f1, #4f46e5)",
+                marginLeft: "12px",
+                cursor: isAnyRunning ? "not-allowed" : "pointer",
+              }}
+            >
+              💾 로그 내보내기 & 비우기
             </button>
           )}
         </div>
@@ -489,11 +667,39 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
               <DeviceCard
                 key={device.device_id}
                 device={device}
-                state={deviceStates[device.device_id] || { status: 'IDLE', okCount: 0, ngCount: 0 }}
+                state={
+                  deviceStates[device.device_id] || {
+                    status: "IDLE",
+                    okCount: 0,
+                    ngCount: 0,
+                  }
+                }
                 onStart={() => handleStartInspection(device)}
                 delay={idx * 80}
               />
             ))}
+
+            {/* 🔄 연속 가동 장비 (하단 고정, 장비 관리와 독립) */}
+            <div style={{ borderTop: '2px dashed #ddd', marginTop: '20px', paddingTop: '16px' }}>
+              <h3 style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>🔄 연속 가동 장비</h3>
+              {CONTINUOUS_DEVICES.map((device, idx) => (
+                <ContinuousDeviceCard
+                  key={device.device_id}
+                  device={device}
+                  state={
+                    deviceStates[device.device_id] || {
+                      status: "IDLE",
+                      okCount: 0,
+                      ngCount: 0,
+                      sequence: 0,
+                    }
+                  }
+                  onStart={() => handleStartContinuous(device)}
+                  onStop={() => handleStopContinuous(device)}
+                  delay={idx * 80}
+                />
+              ))}
+            </div>
           </section>
 
           {/* 오른쪽: 실시간 로그 (탭 필터) */}
@@ -501,18 +707,18 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             <h2 className="section-title">실시간 검사 로그</h2>
             <div className="log-tabs">
               <button
-                className={`log-tab ${logTab === 'ALL' ? 'active' : ''}`}
-                onClick={() => setLogTab('ALL')}
+                className={`log-tab ${logTab === "ALL" ? "active" : ""}`}
+                onClick={() => setLogTab("ALL")}
               >
                 전체
               </button>
-              {devices.map(d => (
+              {devices.map((d) => (
                 <button
                   key={d.device_id}
-                  className={`log-tab ${logTab === d.device_id ? 'active' : ''}`}
+                  className={`log-tab ${logTab === d.device_id ? "active" : ""}`}
                   onClick={() => setLogTab(d.device_id)}
                 >
-                  #{d.device_id.replace('RASP_PI_0', '')}
+                  #{d.device_id.replace("RASP_PI_0", "")}
                 </button>
               ))}
             </div>
@@ -520,27 +726,31 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
               {filteredLogs.length === 0 ? (
                 <p className="log-empty">
                   {logs.length === 0
-                    ? '검사를 시작하면 로그가 여기에 표시됩니다.'
-                    : '이 장비의 로그가 아직 없습니다.'}
+                    ? "검사를 시작하면 로그가 여기에 표시됩니다."
+                    : "이 장비의 로그가 아직 없습니다."}
                 </p>
               ) : (
-                filteredLogs.map(log => (
+                filteredLogs.map((log) => (
                   <div
                     key={log.id}
-                    className={`log-item ${log.result === 'NG' ? 'log-ng' : 'log-ok'}`}
+                    className={`log-item ${log.result === "NG" ? "log-ng" : "log-ok"}`}
                   >
                     <span className="log-device">{log.device_id}</span>
                     <span className="log-seq">#{log.sequence}</span>
-                    <span className={`log-result ${log.result === 'NG' ? 'ng' : 'ok'}`}>
+                    <span
+                      className={`log-result ${log.result === "NG" ? "ng" : "ok"}`}
+                    >
                       {log.result}
                     </span>
-                    {log.result === 'NG' && (
+                    {log.result === "NG" && (
                       <span className="log-defect">{log.defect_type}</span>
                     )}
-                    {log.status_codes && log.result === 'NG' && (
+                    {log.status_codes && log.result === "NG" && (
                       <span className="log-code">{log.status_codes}</span>
                     )}
-                    <span className="log-time">{log.timestamp?.split(' ')[1]}</span>
+                    <span className="log-time">
+                      {log.timestamp?.split(" ")[1]}
+                    </span>
                   </div>
                 ))
               )}

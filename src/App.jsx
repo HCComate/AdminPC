@@ -35,7 +35,7 @@ export default function App() {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />;
   }
 
-  if (page === 'users' && user.role === 'Master') {
+  if (page === 'users' && user.role === 'MASTER') {
     return (
       <UserManagement
         user={user}
@@ -44,8 +44,8 @@ export default function App() {
     );
   }
 
-  // 근무 일정 관리 페이지 (Master, Technician 접근 가능)
-  if (page === 'schedules' && (user.role === 'Master' || user.role === 'Technician')) {
+  // 근무 일정 관리 페이지 (MASTER, TECHNICIAN 접근 가능)
+  if (page === 'schedules' && (user.role === 'MASTER' || user.role === 'TECHNICIAN')) {
     return (
       <ScheduleManagement
         user={user}
@@ -54,8 +54,8 @@ export default function App() {
     );
   }
 
-  // 공지사항 관리 페이지 (Master, Technician 접근 가능)
-  if (page === 'notices' && (user.role === 'Master' || user.role === 'Technician')) {
+  // 공지사항 관리 페이지 (MASTER, TECHNICIAN 접근 가능)
+  if (page === 'notices' && (user.role === 'MASTER' || user.role === 'TECHNICIAN')) {
     return (
       <NoticeManagement
         user={user}
@@ -64,8 +64,8 @@ export default function App() {
     );
   }
 
-  // 장비 관리 페이지 (Master 전용)
-  if (page === 'devices' && user.role === 'Master') {
+  // 장비 관리 페이지 (MASTER 전용)
+  if (page === 'devices' && user.role === 'MASTER') {
     return (
       <DeviceManagement
         user={user}
