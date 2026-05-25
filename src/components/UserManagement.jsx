@@ -282,9 +282,9 @@ export default function UserManagement({ user, onBack }) {
                 </tr>
               </thead>
               <tbody>
-                {users.map(u => (
+                {users.map((u, index) => (
                   <tr key={u.id}>
-                    <td className="td-id">{u.id}</td>
+                    <td className="td-id">{index + 1}</td>
                     <td className="td-empid">{u.emp_id}</td>
                     <td className="td-username">
                       {u.username}
