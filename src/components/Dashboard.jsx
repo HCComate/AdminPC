@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { SERVER_URL } from "../config";
 import socket from "../socket";
 import DeviceCard from "./DeviceCard";
-import ContinuousDeviceCard, { CONTINUOUS_DEVICES } from "./ContinuousDeviceCard";
+import ContinuousDeviceCard, {
+  CONTINUOUS_DEVICES,
+} from "./ContinuousDeviceCard";
 import "./Dashboard.css";
 import logoImg from "../assets/logo.png";
 
@@ -385,10 +387,17 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
   // 💾 로그 내보내기 + 비우기 핸들러
   const handleExportAndClear = async () => {
     if (isAnyRunning) {
-      alert("\u26a0\ufe0f \uc7a5\ube44\uac00 \uac00\ub3d9 \uc911\uc77c \ub54c\ub294 \ub85c\uadf8\ub97c \ub0b4\ubcf4\ub0bc \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.");
+      alert(
+        "\u26a0\ufe0f \uc7a5\ube44\uac00 \uac00\ub3d9 \uc911\uc77c \ub54c\ub294 \ub85c\uadf8\ub97c \ub0b4\ubcf4\ub0bc \uc218 \uc5c6\uc2b5\ub2c8\ub2e4.",
+      );
       return;
     }
-    if (!confirm("\ud604\uc7ac\uae4c\uc9c0\uc758 \ubaa8\ub4e0 \ub370\uc774\ud130 \ub85c\uadf8\ub97c CSV \ud30c\uc77c\ub85c \uc800\uc7a5\ud558\uace0,\nDB\ub97c \ube44\uc6b8\uae4c\uc694?")) return;
+    if (
+      !confirm(
+        "\ud604\uc7ac\uae4c\uc9c0\uc758 \ubaa8\ub4e0 \ub370\uc774\ud130 \ub85c\uadf8\ub97c CSV \ud30c\uc77c\ub85c \uc800\uc7a5\ud558\uace0,\nDB\ub97c \ube44\uc6b8\uae4c\uc694?",
+      )
+    )
+      return;
 
     try {
       const token = localStorage.getItem("token");
@@ -398,7 +407,9 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(`\u2705 ${data.message}\n\uc800\uc7a5 \ud30c\uc77c: ${data.file}`);
+        alert(
+          `\u2705 ${data.message}\n\uc800\uc7a5 \ud30c\uc77c: ${data.file}`,
+        );
         // \ud1b5\uacc4 \ucd08\uae30\ud654
         setDbStats({ ok: 0, ng: 0, total: 0 });
         sessionOk.current = 0;
@@ -565,7 +576,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
           )}
           {(user.role === "MASTER" || user.role === "TECHNICIAN") && (
             <button
-              className={`manage-users-btn notice-btn ${isAnyRunning ? "disabled" : ""}`}
+              className={`manage-users-btn schedule-btn ${isAnyRunning ? "disabled" : ""}`}
               onClick={handleNavigateNotice}
             >
               📢 공지사항 관리
@@ -581,7 +592,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
           )}
           {user.role === "MASTER" && (
             <button
-              className={`manage-users-btn ${isAnyRunning ? "disabled" : ""}`}
+              className={`manage-users-btn schedule-btn ${isAnyRunning ? "disabled" : ""}`}
               onClick={handleNavigateUser}
             >
               👥 사용자 관리
@@ -680,8 +691,22 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             ))}
 
             {/* 🔄 연속 가동 장비 (하단 고정, 장비 관리와 독립) */}
-            <div style={{ borderTop: '2px dashed #ddd', marginTop: '20px', paddingTop: '16px' }}>
-              <h3 style={{ fontSize: '14px', color: '#666', marginBottom: '12px' }}>🔄 연속 가동 장비</h3>
+            <div
+              style={{
+                borderTop: "2px dashed #ddd",
+                marginTop: "20px",
+                paddingTop: "16px",
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: "14px",
+                  color: "#666",
+                  marginBottom: "12px",
+                }}
+              >
+                🔄 연속 가동 장비
+              </h3>
               {CONTINUOUS_DEVICES.map((device, idx) => (
                 <ContinuousDeviceCard
                   key={device.device_id}
