@@ -1,16 +1,5 @@
 import './DeviceCard.css';
 
-<<<<<<< HEAD
-=======
-// 연속 가동 장비 정의 (DB 장비 관리와 독립, 고정)
-const CONTINUOUS_DEVICES = [
-  { device_id: 'CONT_PI_01', name: '연속 검사 장비 #1', model_name: 'SMT_CONT_A10' },
-  { device_id: 'CONT_PI_02', name: '연속 검사 장비 #2', model_name: 'SMT_CONT_B10' },
-];
-
-export { CONTINUOUS_DEVICES };
-
->>>>>>> 25dd1fef74540e925103100cd186820f019f9dd6
 export default function ContinuousDeviceCard({ device, state, onStart, onStop, delay }) {
   const isRunning = state.status === 'RUN';
   const isError = state.status === 'ERROR';
@@ -21,11 +10,7 @@ export default function ContinuousDeviceCard({ device, state, onStart, onStop, d
   // 상태별 배지 텍스트 & 클래스
   const statusConfig = {
     IDLE: { text: '대기 중', className: 'idle' },
-<<<<<<< HEAD
     RUN: { text: '가동 중', className: 'run' },
-=======
-    RUN: { text: '연속 가동 중', className: 'run' },
->>>>>>> 25dd1fef74540e925103100cd186820f019f9dd6
     ERROR: { text: '오류 발생', className: 'error' },
     STOP: { text: '가동 종료', className: 'stop' },
     STOPPING: { text: '종료 중...', className: 'stop' },
@@ -43,11 +28,7 @@ export default function ContinuousDeviceCard({ device, state, onStart, onStop, d
       <div className="device-info">
         {/* 장비 이름 & ID */}
         <div className="device-header">
-<<<<<<< HEAD
           <h3 className="device-name">{device.name}</h3>
-=======
-          <h3 className="device-name">🔄 {device.name}</h3>
->>>>>>> 25dd1fef74540e925103100cd186820f019f9dd6
           <span className={`status-badge ${statusClass}`}>
             {(isRunning || isError || isLocked || isStopping) && <span className="status-pulse"></span>}
             {statusText}
@@ -93,11 +74,7 @@ export default function ContinuousDeviceCard({ device, state, onStart, onStop, d
           onClick={onStart}
           disabled={isLocked || isStopping}
         >
-<<<<<<< HEAD
           {isLocked ? '🔒 장비 잠금' : isStopped ? '▶ 재가동' : '▶ 가동 시작'}
-=======
-          {isLocked ? '🔒 장비 잠금' : isStopped ? '▶ 재가동' : '▶ 연속 가동'}
->>>>>>> 25dd1fef74540e925103100cd186820f019f9dd6
         </button>
       )}
     </div>
