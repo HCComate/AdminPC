@@ -1,7 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { SERVER_URL } from "../config";
 import socket from "../socket";
+<<<<<<< HEAD
 import ContinuousDeviceCard from "./ContinuousDeviceCard";
+=======
+import DeviceCard from "./DeviceCard";
+import ContinuousDeviceCard, {
+  CONTINUOUS_DEVICES,
+} from "./ContinuousDeviceCard";
+>>>>>>> 25dd1fef74540e925103100cd186820f019f9dd6
 import "./Dashboard.css";
 import logoImg from "../assets/logo.png";
 
@@ -208,7 +215,37 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
       setLogs((prev) => [...newLogEntries, ...prev].slice(0, 100));
     }, 150);
 
+<<<<<<< HEAD
     // (배치 완료 이벤트 제거됨 - 연속 가동만 사용)
+
+    // 🔄 연속 가동 장비 종료 완료 이벤트
+    socket.on("continuous_stopped_notify", (data) => {
+=======
+    // 배치 완료 이벤트 수신 (장비 상태를 STOP으로 변경 → 3초 후 IDLE로 자동 복귀)
+    socket.on("batch_complete_notify", (data) => {
+>>>>>>> 25dd1fef74540e925103100cd186820f019f9dd6
+      const deviceId = data.device_id;
+      setDeviceStates((prev) => ({
+        ...prev,
+        [deviceId]: {
+          ...prev[deviceId],
+          status: "STOP",
+        },
+      }));
+
+      // 3초 후 IDLE로 자동 복귀
+      setTimeout(() => {
+        setDeviceStates((prev) => ({
+          ...prev,
+          [deviceId]: {
+            ...prev[deviceId],
+            status: "IDLE",
+          },
+<<<<<<< HEAD
+=======
+        }));
+      }, 3000);
+    });
 
     // 🔄 연속 가동 장비 종료 완료 이벤트
     socket.on("continuous_stopped_notify", (data) => {
@@ -229,6 +266,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             ...prev[deviceId],
             status: "IDLE",
           },
+>>>>>>> 25dd1fef74540e925103100cd186820f019f9dd6
         }));
       }, 3000);
     });
@@ -272,6 +310,10 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
       socket.off("connect");
       socket.off("disconnect");
       socket.off("mobile_data_feed");
+<<<<<<< HEAD
+=======
+      socket.off("batch_complete_notify");
+>>>>>>> 25dd1fef74540e925103100cd186820f019f9dd6
       socket.off("critical_alert");
 
       socket.off("error_resolved");
@@ -281,6 +323,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
     };
   }, []);
 
+<<<<<<< HEAD
   // 전체 장비 동시 시작 (연속 가동)
   const handleStartAll = () => {
     devices.forEach((device) => {
@@ -291,6 +334,73 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
     });
   };
 
+  // 🔄 연속 가동 장비 시작 핸들러
+  const handleStartContinuous = (device) => {
+    const batchId = `CONT_${new Date().toISOString().slice(0, 10).replace(/-/g, "")}_${String(Math.floor(Math.random() * 999)).padStart(3, "0")}`;
+
+    socket.emit("ui_start_continuous", {
+=======
+  // 검사 시작 버튼 핸들러
+  const handleStartInspection = (device) => {
+    const batchId = `BATCH_${new Date().toISOString().slice(0, 10).replace(/-/g, "")}_${String(Math.floor(Math.random() * 999)).padStart(3, "0")}`;
+
+    // 서버에 검사 시작 이벤트 전송
+    socket.emit("ui_start_btn", {
+>>>>>>> 25dd1fef74540e925103100cd186820f019f9dd6
+      device_id: device.device_id,
+      batch_id: batchId,
+      model_name: device.model_name,
+    });
+
+<<<<<<< HEAD
+=======
+    // 즉시 UI 상태를 IDLE로 전환 (서버 응답 대기 중 표시)
+>>>>>>> 25dd1fef74540e925103100cd186820f019f9dd6
+    setDeviceStates((prev) => ({
+      ...prev,
+      [device.device_id]: {
+        ...prev[device.device_id],
+        status: "IDLE",
+        sequence: 0,
+        ngCount: 0,
+        okCount: 0,
+        lastResult: null,
+      },
+    }));
+  };
+
+<<<<<<< HEAD
+  // 🔄 연속 가동 장비 종료 핸들러
+  const handleStopContinuous = (device) => {
+    socket.emit("ui_stop_continuous", {
+      device_id: device.device_id,
+=======
+  // 전체 장비 동시 시작
+  const handleStartAll = () => {
+    devices.forEach((device) => {
+      const state = deviceStates[device.device_id] || {};
+      if (state.status !== "RUN" && state.status !== "LOCKED") {
+        handleStartInspection(device);
+      }
+>>>>>>> 25dd1fef74540e925103100cd186820f019f9dd6
+    });
+
+    setDeviceStates((prev) => ({
+      ...prev,
+      [device.device_id]: {
+        ...prev[device.device_id],
+        status: "STOPPING",
+      },
+    }));
+  };
+
+<<<<<<< HEAD
+  // 🔓 전체 장비 잠금 해제 (테스트용)
+  const handleUnlockAll = () => {
+    socket.emit("unlock_all_devices");
+  };
+
+=======
   // 🔄 연속 가동 장비 시작 핸들러
   const handleStartContinuous = (device) => {
     const batchId = `CONT_${new Date().toISOString().slice(0, 10).replace(/-/g, "")}_${String(Math.floor(Math.random() * 999)).padStart(3, "0")}`;
@@ -334,6 +444,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
     socket.emit("unlock_all_devices");
   };
 
+>>>>>>> 25dd1fef74540e925103100cd186820f019f9dd6
   // 💾 로그 내보내기 + 비우기 핸들러
   const handleExportAndClear = async () => {
     if (isAnyRunning) {
@@ -633,14 +744,56 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
                     status: "IDLE",
                     okCount: 0,
                     ngCount: 0,
+<<<<<<< HEAD
                     sequence: 0,
                   }
                 }
                 onStart={() => handleStartContinuous(device)}
                 onStop={() => handleStopContinuous(device)}
+=======
+                  }
+                }
+                onStart={() => handleStartInspection(device)}
+>>>>>>> 25dd1fef74540e925103100cd186820f019f9dd6
                 delay={idx * 80}
               />
             ))}
+
+            {/* 🔄 연속 가동 장비 (하단 고정, 장비 관리와 독립) */}
+            <div
+              style={{
+                borderTop: "2px dashed #ddd",
+                marginTop: "20px",
+                paddingTop: "16px",
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: "14px",
+                  color: "#666",
+                  marginBottom: "12px",
+                }}
+              >
+                🔄 연속 가동 장비
+              </h3>
+              {CONTINUOUS_DEVICES.map((device, idx) => (
+                <ContinuousDeviceCard
+                  key={device.device_id}
+                  device={device}
+                  state={
+                    deviceStates[device.device_id] || {
+                      status: "IDLE",
+                      okCount: 0,
+                      ngCount: 0,
+                      sequence: 0,
+                    }
+                  }
+                  onStart={() => handleStartContinuous(device)}
+                  onStop={() => handleStopContinuous(device)}
+                  delay={idx * 80}
+                />
+              ))}
+            </div>
           </section>
 
           {/* 오른쪽: 실시간 로그 (탭 필터) */}
