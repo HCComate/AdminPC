@@ -250,19 +250,19 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
       );
     });
 
-    // 장비 잠금 해제 → IDLE로 복구
+    // 장비 잠금 해제 → STANDBY로 복구
     socket.on("error_resolved", (data) => {
       const deviceId = data.device_id;
       setDeviceStates((prev) => ({
         ...prev,
         [deviceId]: {
           ...prev[deviceId],
-          status: "IDLE",
+          status: "STANDBY",
         },
       }));
+      // alert(`✅ [${deviceId}] 잠금이 해제되었습니다.`);
     });
-
-    // 잠긴 장비 시작 시도 차단 알림
+    
     socket.on("start_blocked", (data) => {
       alert(`⛔ [${data.device_id}] ${data.reason}`);
     });
@@ -352,6 +352,14 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
   // 🔓 전체 장비 잠금 해제 (테스트용)
   const handleUnlockAll = () => {
     socket.emit("unlock_all_devices");
+    // Optimistic UI update
+    setDeviceStates((prev) => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach((id) => {
+        if (updated[id].status === "LOCKED") updated[id].status = "STANDBY";
+      });
+      return updated;
+    });
   };
 
   // 🔓 개별 장비 잠금 해제
