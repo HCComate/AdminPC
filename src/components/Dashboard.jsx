@@ -113,7 +113,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
 
                 let status = d.status;
                 // 서버에서는 돌고 있더라도 프론트엔드 새로고침 시 초기화 (소켓 데이터가 오면 다시 RUN됨)
-                if (status === "RUN" || status === "ERROR") status = "IDLE";
+                if (status === "RUN" || status === "ERROR") status = "STANDBY";
 
                 updated[d.device_id] = {
                   ...updated[d.device_id],
@@ -216,9 +216,23 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
         ...prev,
         [deviceId]: {
           ...prev[deviceId],
-          status: "IDLE", // 가동이 멈추면 전원이 켜진 대기 상태(IDLE)로 돌아감
+          status: "STANDBY", // 가동이 멈추면 일단 STANDBY 대기 상태로 진입
         },
       }));
+    });
+
+    // ⏳ 상태 자동 전환(STANDBY -> IDLE) 이벤트 리스닝
+    socket.on("device_status_changed", (data) => {
+      setDeviceStates((prev) => {
+        if (prev[data.device_id]?.status === data.status) return prev;
+        return {
+          ...prev,
+          [data.device_id]: {
+            ...prev[data.device_id],
+            status: data.status,
+          }
+        };
+      });
     });
 
     // CRITICAL 오류 → 장비 LOCKED 상태로 변경
@@ -317,12 +331,12 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
     }));
   };
 
-  // 🔌 전원 ON 핸들러 (STOP -> IDLE)
+  // 🔌 전원 ON 핸들러 (STOP -> STANDBY)
   const handlePowerOn = (device) => {
     socket.emit("ui_power_on", { device_id: device.device_id });
     setDeviceStates((prev) => ({
       ...prev,
-      [device.device_id]: { ...prev[device.device_id], status: "IDLE" },
+      [device.device_id]: { ...prev[device.device_id], status: "STANDBY" },
     }));
   };
 

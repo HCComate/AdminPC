@@ -14,13 +14,14 @@ export default function DeviceManagement({ user, onBack }) {
   const [newName, setNewName] = useState('');
   const [newModelName, setNewModelName] = useState('');
   const [newManagerUsername, setNewManagerUsername] = useState('');
+  const [newIdleTimeout, setNewIdleTimeout] = useState('10');
   const [users, setUsers] = useState([]);
 
   // 삭제 확인 모달 상태
   const [deleteTarget, setDeleteTarget] = useState(null); // { device_id, name }
 
-  // 담당자 변경 모달 상태
-  const [editTarget, setEditTarget] = useState(null); // { device_id, manager_username }
+  // 담당자 및 설정 변경 모달 상태
+  const [editTarget, setEditTarget] = useState(null); // { device_id, manager_username, idle_timeout }
 
   const token = localStorage.getItem('token');
 
@@ -119,6 +120,7 @@ export default function DeviceManagement({ user, onBack }) {
           name: newName,
           model_name: newModelName,
           manager_username: newManagerUsername || null,
+          idle_timeout: parseInt(newIdleTimeout, 10) || 10,
         }),
       });
       const data = await res.json();
@@ -128,6 +130,7 @@ export default function DeviceManagement({ user, onBack }) {
         setNewName('');
         setNewModelName('');
         setNewManagerUsername('');
+        setNewIdleTimeout('10');
         setShowForm(false);
         fetchDevices();
       } else {
@@ -138,9 +141,9 @@ export default function DeviceManagement({ user, onBack }) {
     }
   };
 
-  // 담당자 변경 모달 열기
+  // 설정 변경 모달 열기
   const handleEditManagerClick = (device) => {
-    setEditTarget({ device_id: device.device_id, manager_username: device.manager_username || '' });
+    setEditTarget({ device_id: device.device_id, manager_username: device.manager_username || '', idle_timeout: device.idle_timeout || 10 });
   };
 
   // 담당자 변경 API 호출
@@ -154,11 +157,14 @@ export default function DeviceManagement({ user, onBack }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ manager_username: editTarget.manager_username || null })
+        body: JSON.stringify({ 
+          manager_username: editTarget.manager_username || null,
+          idle_timeout: parseInt(editTarget.idle_timeout, 10) || 10
+        })
       });
       const data = await res.json();
       if (res.ok) {
-        setSuccessMsg(`장비 담당자가 변경되었습니다.`);
+        setSuccessMsg(`장비 설정이 변경되었습니다.`);
         fetchDevices();
         setEditTarget(null);
       } else {
@@ -195,8 +201,8 @@ export default function DeviceManagement({ user, onBack }) {
       {editTarget && (
         <div className="delete-modal-overlay" onClick={() => setEditTarget(null)}>
           <div className="delete-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="delete-modal-icon">👤</div>
-            <h3 className="delete-modal-title">담당자 변경 ({editTarget.device_id})</h3>
+            <div className="delete-modal-icon">⚙️</div>
+            <h3 className="delete-modal-title">장비 설정 변경 ({editTarget.device_id})</h3>
             <div className="form-field" style={{ textAlign: 'left', marginBottom: '20px' }}>
               <label>새 담당자 선택</label>
               <select
@@ -211,6 +217,17 @@ export default function DeviceManagement({ user, onBack }) {
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="form-field" style={{ textAlign: 'left', marginBottom: '20px' }}>
+              <label>대기 전환 시간 (초)</label>
+              <input
+                type="number"
+                min="1"
+                value={editTarget.idle_timeout}
+                onChange={(e) => setEditTarget({ ...editTarget, idle_timeout: e.target.value })}
+                style={{ width: '100%', padding: '10px', marginTop: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
+              />
+              <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>지정된 시간 동안 입력이 없으면 유휴(IDLE) 모드로 전환됩니다.</p>
             </div>
             <div className="delete-modal-actions">
               <button className="modal-cancel-btn" onClick={() => setEditTarget(null)}>취소</button>
@@ -298,6 +315,16 @@ export default function DeviceManagement({ user, onBack }) {
                   ))}
                 </select>
               </div>
+              <div className="form-field">
+                <label>대기 전환 시간(초)</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={newIdleTimeout}
+                  onChange={(e) => setNewIdleTimeout(e.target.value)}
+                  placeholder="예: 10"
+                />
+              </div>
               <button type="submit" className="form-submit-btn">등록</button>
             </div>
           </form>
@@ -315,6 +342,7 @@ export default function DeviceManagement({ user, onBack }) {
                   <th>장비 ID</th>
                   <th>장비명</th>
                   <th>검사 모델명</th>
+                  <th>대기 시간</th>
                   <th>담당자</th>
                   <th>등록일</th>
                   <th>관리</th>
@@ -329,6 +357,7 @@ export default function DeviceManagement({ user, onBack }) {
                     </td>
                     <td className="td-name">{d.name}</td>
                     <td className="td-model">{d.model_name}</td>
+                    <td className="td-timeout">{d.idle_timeout}초</td>
                     <td className="td-manager">
                       {d.manager_name ? (
                         <span className={`role-badge ${d.manager_role.toLowerCase()}`}>
@@ -345,7 +374,7 @@ export default function DeviceManagement({ user, onBack }) {
                         style={{ marginRight: '8px', padding: '6px 12px', background: '#007bff', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                         onClick={() => handleEditManagerClick(d)}
                       >
-                        담당자 변경
+                        설정 변경
                       </button>
                       <button
                         className="delete-btn"

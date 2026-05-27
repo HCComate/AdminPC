@@ -10,7 +10,8 @@ export default function ContinuousDeviceCard({ device, state, onStart, onStop, o
 
   // 상태별 배지 텍스트 & 클래스
   const statusConfig = {
-    IDLE: { text: '대기 중 (ON)', className: 'idle' },
+    IDLE: { text: '대기 중 (유휴)', className: 'idle' },
+    STANDBY: { text: '가동 준비 중...', className: 'idle' },
     RUN: { text: '가동 중', className: 'run' },
     ERROR: { text: '오류 발생', className: 'error' },
     STOP: { text: '전원 OFF', className: 'stop' },
@@ -31,7 +32,7 @@ export default function ContinuousDeviceCard({ device, state, onStart, onStop, o
         <div className="device-header">
           <h3 className="device-name">{device.name}</h3>
           <span className={`status-badge ${statusClass}`}>
-            {(isRunning || isError || isLocked || isStopping) && <span className="status-pulse"></span>}
+            {(isRunning || isError || isLocked || isStopping || state.status === 'STANDBY') && <span className="status-pulse"></span>}
             {statusText}
           </span>
         </div>
