@@ -30,6 +30,10 @@ export default function UserManagement({ user, onBack }) {
   const [newNickname, setNewNickname] = useState('');
   const [newEmpId, setNewEmpId] = useState('');
 
+  // 닉네임 수정 상태
+  const [editingUserId, setEditingUserId] = useState(null);
+  const [tempNickname, setTempNickname] = useState('');
+
   // 삭제 확인 모달 상태
   const [deleteTarget, setDeleteTarget] = useState(null); // { id, username }
 
@@ -84,6 +88,37 @@ export default function UserManagement({ user, onBack }) {
         fetchUsers();
       } else {
         setError(data.error || '권한 변경에 실패했습니다.');
+      }
+    } catch {
+      setError('서버에 연결할 수 없습니다.');
+    }
+  };
+
+  // 닉네임 수정 모드 진입
+  const handleEditNickname = (userObj) => {
+    setEditingUserId(userObj.id);
+    setTempNickname(userObj.nickname);
+  };
+
+  // 닉네임 저장
+  const handleSaveNickname = async (userId, username) => {
+    setError('');
+    try {
+      const res = await fetch(`${SERVER_URL}/api/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ nickname: tempNickname }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccessMsg(`${username}의 이름(닉네임)이 변경되었습니다.`);
+        setEditingUserId(null);
+        fetchUsers();
+      } else {
+        setError(data.error || '이름 변경에 실패했습니다.');
       }
     } catch {
       setError('서버에 연결할 수 없습니다.');
@@ -293,7 +328,25 @@ export default function UserManagement({ user, onBack }) {
                       )}
                     </td>
                     <td className="td-nickname">
-                      <strong>{u.nickname}</strong>
+                      {editingUserId === u.id ? (
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            value={tempNickname}
+                            onChange={(e) => setTempNickname(e.target.value)}
+                            style={{ width: '80px', padding: '4px', borderRadius: '4px', border: '1px solid #ccc' }}
+                          />
+                          <button onClick={() => handleSaveNickname(u.id, u.username)} style={{ padding: '4px 8px', background: '#22c55e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>저장</button>
+                          <button onClick={() => setEditingUserId(null)} style={{ padding: '4px 8px', background: '#999', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>취소</button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <strong>{u.nickname}</strong>
+                          <button onClick={() => handleEditNickname(u)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px', color: '#666', padding: '2px' }} title="이름(닉네임) 수정">
+                            ✏️
+                          </button>
+                        </div>
+                      )}
                     </td>
                     <td>
                       <span className={`role-badge ${ROLE_COLORS[u.role]}`}>

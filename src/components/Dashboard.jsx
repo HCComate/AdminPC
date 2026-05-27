@@ -112,7 +112,6 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
                 }
 
                 let status = d.status;
-                if (status === "STOP") status = "IDLE";
                 // 서버에서는 돌고 있더라도 프론트엔드 새로고침 시 초기화 (소켓 데이터가 오면 다시 RUN됨)
                 if (status === "RUN" || status === "ERROR") status = "IDLE";
 
@@ -217,20 +216,9 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
         ...prev,
         [deviceId]: {
           ...prev[deviceId],
-          status: "STOP",
+          status: "IDLE", // 가동이 멈추면 전원이 켜진 대기 상태(IDLE)로 돌아감
         },
       }));
-
-      // 3초 후 IDLE로 자동 복귀
-      setTimeout(() => {
-        setDeviceStates((prev) => ({
-          ...prev,
-          [deviceId]: {
-            ...prev[deviceId],
-            status: "IDLE",
-          },
-        }));
-      }, 3000);
     });
 
     // CRITICAL 오류 → 장비 LOCKED 상태로 변경
@@ -329,9 +317,32 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
     }));
   };
 
+  // 🔌 전원 ON 핸들러 (STOP -> IDLE)
+  const handlePowerOn = (device) => {
+    socket.emit("ui_power_on", { device_id: device.device_id });
+    setDeviceStates((prev) => ({
+      ...prev,
+      [device.device_id]: { ...prev[device.device_id], status: "IDLE" },
+    }));
+  };
+
+  // 🔌 전원 OFF 핸들러 (IDLE -> STOP)
+  const handlePowerOff = (device) => {
+    socket.emit("ui_power_off", { device_id: device.device_id });
+    setDeviceStates((prev) => ({
+      ...prev,
+      [device.device_id]: { ...prev[device.device_id], status: "STOP", okCount: 0, ngCount: 0, sequence: 0 },
+    }));
+  };
+
   // 🔓 전체 장비 잠금 해제 (테스트용)
   const handleUnlockAll = () => {
     socket.emit("unlock_all_devices");
+  };
+
+  // 🔓 개별 장비 잠금 해제
+  const handleUnlockContinuous = (device) => {
+    socket.emit("unlock_device", { device_id: device.device_id });
   };
 
   // 💾 로그 내보내기 + 비우기 핸들러
@@ -638,6 +649,9 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
                 }
                 onStart={() => handleStartContinuous(device)}
                 onStop={() => handleStopContinuous(device)}
+                onUnlock={() => handleUnlockContinuous(device)}
+                onPowerOn={() => handlePowerOn(device)}
+                onPowerOff={() => handlePowerOff(device)}
                 delay={idx * 80}
               />
             ))}
