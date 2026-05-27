@@ -6,8 +6,8 @@
 }
 
 .schedule-header {
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-color);
+  background: #191970;
+  border-bottom: 1px solid #eeeeee;
   padding: 14px 32px;
   display: flex;
   align-items: center;
@@ -15,7 +15,6 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  backdrop-filter: blur(12px);
 }
 
 .schedule-body {
@@ -26,9 +25,9 @@
 
 /* 컨트롤 카드 (날짜 선택 및 저장) */
 .schedule-control-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
+  background: #ffffff;
+  border: 1px solid #eeeeee;
+  border-radius: 12px;
   padding: 24px;
   margin-bottom: 24px;
   display: flex;
@@ -46,44 +45,45 @@
 .date-picker-wrap label {
   font-size: 13px;
   font-weight: 600;
-  color: var(--text-muted);
+  color: #999999;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .date-input {
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
+  background: #fafafa;
+  border: 1px solid #eeeeee;
   border-radius: 8px;
   padding: 12px 16px;
   font-size: 16px;
-  color: var(--text-primary);
-  font-family: var(--font-sans);
+  color: #11181c;
   outline: none;
   transition: border-color 0.2s;
   min-width: 200px;
 }
 
 .date-input:focus {
-  border-color: var(--accent-blue);
+  border-color: #3055c1;
 }
 
 .save-btn {
-  background: linear-gradient(135deg, var(--accent-green), #059669);
+  background: #22c55e;
   color: white;
   border: none;
   border-radius: 10px;
   padding: 12px 32px;
   font-size: 15px;
   font-weight: 600;
-  font-family: var(--font-sans);
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.2s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.2s;
 }
 
 .save-btn:hover:not(:disabled) {
+  background: #16a34a;
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
 }
 
 .save-btn:disabled {
@@ -95,9 +95,9 @@
 
 /* 사용자 리스트 카드 */
 .users-list-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
+  background: #ffffff;
+  border: 1px solid #eeeeee;
+  border-radius: 12px;
   padding: 24px;
   animation: fadeIn 0.4s ease-out;
 }
@@ -105,7 +105,7 @@
 .card-title {
   margin-top: 0;
   margin-bottom: 24px;
-  color: var(--text-primary);
+  color: #11181c;
   font-size: 18px;
 }
 
@@ -119,21 +119,21 @@
   display: flex;
   align-items: center;
   padding: 16px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background: #fafafa;
+  border: 1px solid #eeeeee;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .user-check-card:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--accent-blue);
+  background: #f1f5f9;
+  border-color: #3055c1;
 }
 
 .user-check-card.selected {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: var(--accent-blue);
+  background: rgba(48, 85, 193, 0.05);
+  border-color: #3055c1;
 }
 
 .check-indicator {
@@ -144,7 +144,7 @@
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: var(--accent-blue);
+  accent-color: #3055c1;
 }
 
 .user-info-text {
@@ -161,37 +161,36 @@
 
 .user-name-role strong {
   font-size: 16px;
-  color: var(--text-primary);
+  color: #11181c;
 }
 
 .role-text {
   font-size: 11px;
-  background: rgba(255, 255, 255, 0.1);
+  background: #eeeeee;
   padding: 2px 6px;
   border-radius: 4px;
-  color: var(--text-secondary);
+  color: #64748b;
 }
 
 .user-emp-id {
   font-size: 13px;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
+  color: #999999;
 }
 
 .no-data {
   grid-column: 1 / -1;
   text-align: center;
   padding: 40px;
-  color: var(--text-muted);
+  color: #999999;
 }
 
 /* =========================================
    주요 일정(Event) 섹션 스타일
    ========================================= */
 .events-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
+  background: #ffffff;
+  border: 1px solid #eeeeee;
+  border-radius: 12px;
   padding: 24px;
   margin-bottom: 24px;
   animation: fadeIn 0.35s ease-out;
@@ -205,24 +204,23 @@
 
 .event-input {
   flex: 1;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
+  background: #fafafa;
+  border: 1px solid #eeeeee;
   border-radius: 8px;
   padding: 12px 16px;
   font-size: 15px;
-  color: var(--text-primary);
-  font-family: var(--font-sans);
+  color: #11181c;
   outline: none;
   transition: border-color 0.2s;
 }
 
 .event-input:focus {
-  border-color: var(--accent-blue);
+  border-color: #3055c1;
 }
 
 .add-event-btn {
   padding: 0 24px;
-  background-color: var(--accent-blue);
+  background-color: #3055c1;
   color: white;
   border: none;
   border-radius: 8px;
@@ -232,7 +230,7 @@
 }
 
 .add-event-btn:hover {
-  background-color: #2563eb;
+  background-color: #191970;
 }
 
 .events-list {
@@ -249,19 +247,19 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background-color: #fafafa;
+  border: 1px solid #eeeeee;
   border-radius: 8px;
   transition: all 0.2s;
 }
 
 .event-item:hover {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: #dddddd;
 }
 
 .event-content {
   font-size: 15px;
-  color: var(--text-primary);
+  color: #11181c;
 }
 
 .delete-event-btn {
@@ -270,7 +268,9 @@
   cursor: pointer;
   font-size: 16px;
   opacity: 0.6;
-  transition: opacity 0.2s, transform 0.2s;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
   padding: 4px;
 }
 
@@ -281,11 +281,10 @@
 
 .no-events {
   text-align: center;
-  color: var(--text-muted);
+  color: #999999;
   padding: 20px;
   font-size: 14px;
-  background-color: var(--bg-secondary);
+  background-color: #fafafa;
   border-radius: 8px;
-  border: 1px dashed var(--border-color);
+  border: 1px dashed #eeeeee;
 }
-

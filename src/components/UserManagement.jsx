@@ -2,18 +2,18 @@ import { useState, useEffect } from 'react';
 import { SERVER_URL } from '../config';
 import './UserManagement.css';
 
-const ROLES = ['Operator', 'Technician', 'Master'];
+const ROLES = ['OPERATOR', 'TECHNICIAN', 'MASTER'];
 
 const ROLE_LABELS = {
-  Operator: '작업자',
-  Technician: '엔지니어',
-  Master: '관리자',
+  OPERATOR: '작업자',
+  TECHNICIAN: '엔지니어',
+  MASTER: '관리자',
 };
 
 const ROLE_COLORS = {
-  Operator: 'role-operator',
-  Technician: 'role-technician',
-  Master: 'role-master',
+  OPERATOR: 'role-operator',
+  TECHNICIAN: 'role-technician',
+  MASTER: 'role-master',
 };
 
 export default function UserManagement({ user, onBack }) {
@@ -26,7 +26,7 @@ export default function UserManagement({ user, onBack }) {
   const [showForm, setShowForm] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [newRole, setNewRole] = useState('Operator');
+  const [newRole, setNewRole] = useState('OPERATOR');
   const [newNickname, setNewNickname] = useState('');
   const [newEmpId, setNewEmpId] = useState('');
 
@@ -142,7 +142,7 @@ export default function UserManagement({ user, onBack }) {
         setSuccessMsg(`${newUsername} 계정이 등록되었습니다.`);
         setNewUsername('');
         setNewPassword('');
-        setNewRole('Operator');
+        setNewRole('OPERATOR');
         setNewNickname('');
         setNewEmpId('');
         setShowForm(false);
@@ -282,9 +282,9 @@ export default function UserManagement({ user, onBack }) {
                 </tr>
               </thead>
               <tbody>
-                {users.map(u => (
+                {users.map((u, index) => (
                   <tr key={u.id}>
-                    <td className="td-id">{u.id}</td>
+                    <td className="td-id">{index + 1}</td>
                     <td className="td-empid">{u.emp_id}</td>
                     <td className="td-username">
                       {u.username}
