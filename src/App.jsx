@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LoginPage from "./components/LoginPage";
 import Dashboard from "./components/Dashboard";
 import UserManagement from "./components/UserManagement";
@@ -7,14 +7,33 @@ import NoticeManagement from "./components/NoticeManagement";
 import DeviceManagement from "./components/DeviceManagement";
 
 export default function App() {
-  // 새로고침 시 localStorage에서 로그인 상태 복원 (지연 초기화 함수로 동기적 처리)
+  // JWT 토큰의 payload를 디코딩하는 헬퍼 (Base64URL → JSON)
+  const decodeJwtPayload = (token) => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      return JSON.parse(atob(base64));
+    } catch {
+      return null;
+    }
+  };
+
+  // 새로고침 시 localStorage에서 로그인 상태 복원 (JWT 만료 검증 포함)
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("user");
     const savedToken = localStorage.getItem("token");
     if (savedUser && savedToken) {
       try {
+        // JWT 토큰 만료 여부 검증
+        const payload = decodeJwtPayload(savedToken);
+        if (!payload || (payload.exp && payload.exp * 1000 < Date.now())) {
+          // 토큰이 만료되었거나 유효하지 않음 → 세션 클리어
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          return null;
+        }
+
         const parsed = JSON.parse(savedUser);
-        // 백엔드 필드 키 구조(role, user_role, Role) 및 대소문자 변동에 무관하도록 안전하게 대문자 처리
         const resolvedRole = (
           parsed.role ||
           parsed.user_role ||
@@ -22,12 +41,20 @@ export default function App() {
           "OPERATOR"
         ).toUpperCase();
 
+        // username이 없으면 유효하지 않은 세션으로 판단
+        if (!parsed.username) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          return null;
+        }
+
         return {
-          username: parsed.username || parsed.id || "admin",
+          username: parsed.username,
           role: resolvedRole,
         };
       } catch {
-        localStorage.clear();
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
         return null;
       }
     }
@@ -47,7 +74,7 @@ export default function App() {
     ).toUpperCase();
 
     const userObj = {
-      username: userInfo.username || userInfo.id || "admin",
+      username: userInfo.username || userInfo.id,
       role: resolvedRole,
     };
 
