@@ -131,7 +131,12 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
     );
 
     // 소켓 이벤트 리스너 등록 (connect 이전에 등록해도 문제없음)
-    socket.on("connect", () => setConnected(true));
+    socket.on("connect", () => {
+      setConnected(true);
+      if (token) {
+        socket.emit("worker_auth", { token });
+      }
+    });
     socket.on("disconnect", () => setConnected(false));
 
     // 🚀 성능 최적화: 데이터를 즉시 렌더링하지 않고 버퍼에 쌓기만 함
