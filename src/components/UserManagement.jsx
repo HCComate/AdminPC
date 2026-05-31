@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SERVER_URL } from '../config';
+import socket from '../socket';
 import './UserManagement.css';
 
 const ROLES = ['OPERATOR', 'TECHNICIAN', 'MASTER'];
@@ -60,6 +61,23 @@ export default function UserManagement({ user, onBack }) {
 
   useEffect(() => {
     fetchUsers();
+
+    // 실시간 근무 상태 업데이트 리스너
+    const handleStatusChanged = (data) => {
+      setUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u.username === data.username
+            ? { ...u, is_online: data.is_online }
+            : u
+        )
+      );
+    };
+
+    socket.on('worker_status_changed', handleStatusChanged);
+
+    return () => {
+      socket.off('worker_status_changed', handleStatusChanged);
+    };
   }, []);
 
   // 알림 메시지 자동 제거

@@ -63,8 +63,14 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
       .then((res) => (res.ok ? res.json() : null))
       .catch(() => null);
 
-    Promise.all([fetchSummary, fetchDevices, fetchRegisteredDevices]).then(
-      ([summaryData, devicesData, registeredData]) => {
+    const fetchLogs = fetch(`${SERVER_URL}/api/logs?limit=100`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null);
+
+    Promise.all([fetchSummary, fetchDevices, fetchRegisteredDevices, fetchLogs]).then(
+      ([summaryData, devicesData, registeredData, logsData]) => {
         // 통계 반영
         if (summaryData) {
           setDbStats({
@@ -123,6 +129,20 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             });
             return updated;
           });
+        }
+
+        // 기존 로그 내역 반영
+        if (logsData && Array.isArray(logsData)) {
+          const formattedLogs = logsData.map((log) => ({
+            id: `db-${log.id}`,
+            device_id: log.device_id,
+            sequence: log.sequence,
+            result: log.vision_result_code,
+            defect_type: log.defect_type,
+            status_codes: (log.status_info || []).map((s) => s.code).join(", "),
+            timestamp: log.timestamp,
+          }));
+          setLogs(formattedLogs);
         }
 
         // 로딩 화면 종료
