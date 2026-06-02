@@ -7,6 +7,7 @@ export default function ContinuousDeviceCard({ device, state, onStart, onStop, o
   const isLocked = state.status === 'LOCKED';
   const isStopping = state.status === 'STOPPING';
   const isIdle = state.status === 'IDLE';
+  const assignedTo = state.assignedTo || null;
 
   // 상태별 배지 텍스트 & 클래스
   const statusConfig = {
@@ -56,6 +57,24 @@ export default function ContinuousDeviceCard({ device, state, onStart, onStop, o
               <span className="result-ok">OK {state.okCount}</span>
               <span className="result-ng">NG {state.ngCount}</span>
             </span>
+          </div>
+        )}
+
+        {/* 잠금 상태일 때 담당자 표시 */}
+        {isLocked && (
+          <div
+            className="assigned-info"
+            style={{
+              marginTop: '8px',
+              padding: '6px 10px',
+              borderRadius: '6px',
+              backgroundColor: assignedTo ? '#d1fae5' : '#fee2e2',
+              fontSize: '12px',
+              fontWeight: '600',
+              color: assignedTo ? '#065f46' : '#991b1b',
+            }}
+          >
+            {assignedTo ? `✅ ${assignedTo}님이 처리 중` : '⏳ 담당자 배정 대기 중'}
           </div>
         )}
       </div>

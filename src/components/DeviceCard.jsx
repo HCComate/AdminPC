@@ -5,6 +5,7 @@ export default function DeviceCard({ device, state, onStart, delay }) {
   const isError = state.status === 'ERROR';
   const isStopped = state.status === 'STOP';
   const isLocked = state.status === 'LOCKED';
+  const assignedTo = state.assignedTo || null;
   const progress = state.sequence;
 
   // 상태별 배지 텍스트 & 클래스
@@ -44,6 +45,23 @@ export default function DeviceCard({ device, state, onStart, delay }) {
             <span className="meta-value">{device.model_name}</span>
           </span>
         </div>
+
+        {/* 잠금 상태일 때 담당자 표시 */}
+        {isLocked && (
+          <div className="assigned-info" style={{
+            marginTop: '6px',
+            padding: '4px 8px',
+            borderRadius: '6px',
+            backgroundColor: assignedTo ? '#d1fae5' : '#fee2e2',
+            fontSize: '12px',
+            fontWeight: '600',
+            color: assignedTo ? '#065f46' : '#991b1b',
+          }}>
+            {assignedTo
+              ? `✅ 처리 중: ${assignedTo}`
+              : '⏳ 담당자 배정 대기 중'}
+          </div>
+        )}
 
         {/* 프로그레스 바 (가동 중일 때만) */}
         {(isRunning || isError || isStopped || isLocked) && (
