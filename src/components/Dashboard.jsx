@@ -69,8 +69,15 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
       .then((res) => (res.ok ? res.json() : null))
       .catch(() => null);
 
-    Promise.all([fetchSummary, fetchDevices, fetchRegisteredDevices, fetchLogs]).then(
-      ([summaryData, devicesData, registeredData, logsData]) => {
+    // 잠긴 장비 목록 (담당자 정보 포함) — 새로고침 시 LOCKED + 담당자 복원
+    const fetchLocked = fetch(`${SERVER_URL}/api/devices/locked`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .catch(() => null);
+
+    Promise.all([fetchSummary, fetchDevices, fetchRegisteredDevices, fetchLogs, fetchLocked]).then(
+      ([summaryData, devicesData, registeredData, logsData, lockedData]) => {
         // 통계 반영
         if (summaryData) {
           setDbStats({
@@ -143,6 +150,23 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
             timestamp: log.timestamp,
           }));
           setLogs(formattedLogs);
+        }
+
+        // 잠긴 장비 LOCKED 상태 + 담당자 복원 (새로고침 대비)
+        if (lockedData && Array.isArray(lockedData)) {
+          setDeviceStates((prev) => {
+            const updated = { ...prev };
+            lockedData.forEach((d) => {
+              const id = d.device_id;
+              if (!id) return;
+              updated[id] = {
+                ...updated[id],
+                status: "LOCKED",
+                assignedTo: d.assigned_to || null,
+              };
+            });
+            return updated;
+          });
         }
 
         // 로딩 화면 종료
@@ -263,19 +287,35 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
     // CRITICAL 오류 → 장비 LOCKED 상태로 변경
     socket.on("critical_alert", (data) => {
       const deviceId = data.device_id;
+      const isRetry = data.retry;
       setDeviceStates((prev) => ({
         ...prev,
         [deviceId]: {
           ...prev[deviceId],
           status: "LOCKED",
+          assignedTo: null, // 재에스컬레이션 시 담당자 초기화
         },
       }));
-      alert(
-        `🚨 [${deviceId}] 치명적(CRITICAL) 오류 발생!\n에러 코드: ${(data.error_codes || []).join(", ")}\n장비가 잠금되었습니다. 모바일 앱에서 해제해 주세요.`,
-      );
+      const msg = isRetry
+        ? `🔄 [${deviceId}] 미해결 CRITICAL 오류 재알림!\n담당자 없음 — 조치 필요`
+        : `🚨 [${deviceId}] CRITICAL 오류!\n코드: ${(data.error_codes || []).join(", ")}\n모바일 앱으로 에스컬레이션 중`;
+      alert(msg);
     });
 
-    // 장비 잠금 해제 → STANDBY로 복구
+    // 에스컬레이션 수락 → PC 화면에 담당자 표시
+    socket.on("escalation_assigned", (data) => {
+      const deviceId = data.device_id;
+      const username = data.username || data.assigned_to || "알 수 없음";
+      setDeviceStates((prev) => ({
+        ...prev,
+        [deviceId]: {
+          ...prev[deviceId],
+          assignedTo: username,
+        },
+      }));
+    });
+
+    // 장비 잠금 해제 → STANDBY로 복구 + 담당자 초기화
     socket.on("error_resolved", (data) => {
       const deviceId = data.device_id;
       setDeviceStates((prev) => ({
@@ -283,11 +323,11 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
         [deviceId]: {
           ...prev[deviceId],
           status: "STANDBY",
+          assignedTo: null,
         },
       }));
-      // alert(`✅ [${deviceId}] 잠금이 해제되었습니다.`);
     });
-    
+
     socket.on("start_blocked", (data) => {
       alert(`⛔ [${data.device_id}] ${data.reason}`);
     });
@@ -300,7 +340,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
       socket.off("disconnect");
       socket.off("mobile_data_feed");
       socket.off("critical_alert");
-
+      socket.off("escalation_assigned");
       socket.off("error_resolved");
       socket.off("start_blocked");
       socket.off("continuous_stopped_notify");
@@ -315,6 +355,37 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
       if (state.status !== "RUN" && state.status !== "LOCKED") {
         handleStartContinuous(device);
       }
+    });
+  };
+
+  // 전체 장비 검사 중지 (LOCKED 제외)
+  // 중지된 장비는 STANDBY → idle_timeout 후 IDLE 로 자동 전환됨
+  const handleStopAll = () => {
+    const runningDevices = devices.filter((device) => {
+      const status = (deviceStates[device.device_id] || {}).status;
+      // LOCKED는 건드리지 않음, RUN · ERROR 상태만 중지 대상
+      return status === "RUN" || status === "ERROR";
+    });
+
+    if (runningDevices.length === 0) {
+      alert("현재 가동 중인 장비가 없습니다.");
+      return;
+    }
+
+    if (!confirm(
+      `가동 중인 장비 ${runningDevices.length}대를 모두 중지하시겠습니까?\n` +
+      `(잠금 장비는 그대로 유지됩니다)`
+    )) return;
+
+    runningDevices.forEach((device) => {
+      socket.emit("ui_stop_continuous", { device_id: device.device_id });
+      setDeviceStates((prev) => ({
+        ...prev,
+        [device.device_id]: {
+          ...prev[device.device_id],
+          status: "STOPPING",
+        },
+      }));
     });
   };
 
@@ -642,10 +713,24 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
           </div>
         </section>
 
-        {/* 전체 시작 버튼 + 잠금 해제 버튼 */}
+        {/* 전체 시작 / 중지 / 잠금 해제 버튼 */}
         <div className="action-bar">
           <button className="start-all-btn" onClick={handleStartAll}>
             ▶ 전체 장비 검사 시작
+          </button>
+          <button
+            className="start-all-btn"
+            onClick={handleStopAll}
+            disabled={!isAnyRunning}
+            style={{
+              background: isAnyRunning
+                ? "linear-gradient(135deg, #ef4444, #dc2626)"
+                : "#ccc",
+              marginLeft: "12px",
+              cursor: isAnyRunning ? "pointer" : "not-allowed",
+            }}
+          >
+            ⏹ 전체 장비 검사 중지
           </button>
           {lockedCount > 0 && (
             <button
