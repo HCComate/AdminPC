@@ -39,9 +39,7 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    // 1) 소켓 연결 즉시 시작 (지연 방지)
-    socket.connect();
-
+    // 소켓 연결 상태 리스너 (연결 자체는 App.jsx에서 관리)
     const fetchSummary = fetch(`${SERVER_URL}/api/dashboard/summary`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -174,14 +172,19 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
       },
     );
 
-    // 소켓 이벤트 리스너 등록 (connect 이전에 등록해도 문제없음)
-    socket.on("connect", () => {
+    // 소켓 연결 상태 추적 (연결 자체는 App.jsx가 관리)
+    const handleConnect = () => {
       setConnected(true);
-      if (token) {
-        socket.emit("worker_auth", { token });
-      }
-    });
-    socket.on("disconnect", () => setConnected(false));
+    };
+    const handleDisconnect = () => setConnected(false);
+
+    socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
+
+    // 이미 연결되어 있다면 즉시 반영
+    if (socket.connected) {
+      setConnected(true);
+    }
 
     // 🚀 성능 최적화: 데이터를 즉시 렌더링하지 않고 버퍼에 쌓기만 함
     socket.on("mobile_data_feed", (data) => {
@@ -336,15 +339,16 @@ export default function Dashboard({ user, onLogout, onNavigate }) {
       // 🚀 flush 타이머 정리
       if (flushTimerRef.current) clearInterval(flushTimerRef.current);
 
-      socket.off("connect");
-      socket.off("disconnect");
+      socket.off("connect", handleConnect);
+      socket.off("disconnect", handleDisconnect);
       socket.off("mobile_data_feed");
       socket.off("critical_alert");
       socket.off("escalation_assigned");
       socket.off("error_resolved");
       socket.off("start_blocked");
       socket.off("continuous_stopped_notify");
-      socket.disconnect();
+      socket.off("device_status_changed");
+      // 소켓 연결은 유지 (App.jsx가 관리) — disconnect() 호출하지 않음
     };
   }, []);
 
