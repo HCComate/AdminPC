@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import socket from "./socket";
 import LoginPage from "./components/LoginPage";
 import Dashboard from "./components/Dashboard";
 import UserManagement from "./components/UserManagement";
@@ -61,7 +62,15 @@ export default function App() {
     return null;
   });
 
-  const [page, setPage] = useState("dashboard"); // 'dashboard' | 'users'
+  const [page, setPageState] = useState(() => {
+    return localStorage.getItem("page") || "dashboard";
+  });
+
+  // 페이지 변경 시 localStorage에도 저장 (새로고침 시 복원용)
+  const setPage = (newPage) => {
+    localStorage.setItem("page", newPage);
+    setPageState(newPage);
+  };
 
   const handleLoginSuccess = (data) => {
     // 백엔드 응답이 중첩 객체(data.user) 형태이거나 direct 프로퍼티인 경우 모두 대응
@@ -80,14 +89,42 @@ export default function App() {
 
     localStorage.setItem("user", JSON.stringify(userObj));
     setUser(userObj);
+
+    // 로그인 성공 시 소켓 연결 시작
+    if (!socket.connected) {
+      socket.connect();
+    }
+    const token = localStorage.getItem("token");
+    if (token) {
+      socket.emit("worker_auth", { token });
+    }
   };
 
   const handleLogout = () => {
+    // 로그아웃 시에만 소켓 연결 해제 (페이지 이동 시에는 유지)
+    socket.disconnect();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("page");
     setUser(null);
-    setPage("dashboard");
+    setPageState("dashboard");
   };
+
+  // 앱 레벨 소켓 연결 관리: 로그인 상태가 복원된 경우 소켓 자동 재연결
+  useEffect(() => {
+    if (user && !socket.connected) {
+      socket.connect();
+      const token = localStorage.getItem("token");
+      // connect 이벤트에서 worker_auth를 보내도록 리스너 등록
+      const handleConnect = () => {
+        if (token) socket.emit("worker_auth", { token });
+      };
+      socket.on("connect", handleConnect);
+      return () => {
+        socket.off("connect", handleConnect);
+      };
+    }
+  }, [user]);
 
   // 로그인 안 됐으면 로그인 화면
   if (!user) {
